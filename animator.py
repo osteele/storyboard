@@ -32,8 +32,11 @@ class Animator:
         self.t0 += other.t0
         return self
     
-    def update1(self):
-        t = self.globals['anim'] * self.t0
+    def update1(self, frame=None):
+        if frame is None:
+            t = self.globals['anim'] * self.t0
+        else:
+            t = frame / 50.0
         set = {}
         for t0, t1, moves in self.spans:
             s = (t - t0) / (t1 - t0) if t1 > t0 else int(t > t0)
@@ -45,6 +48,6 @@ class Animator:
                 self.globals[name] = v
 
     @classmethod
-    def update0(cls):
+    def update0(cls, frame=None):
         global TheAnimator
-        TheAnimator.update1()
+        TheAnimator.update1(frame)
