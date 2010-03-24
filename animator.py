@@ -1,8 +1,7 @@
 class Animator:
-    def __init__(self, globals, the1=False):
-        if the1:
-            global TheAnimator
-            TheAnimator = self
+    def __init__(self, globals):
+        global GlobalAnimator
+        GlobalAnimator = self
         self.globals = globals
         self.t0 = 0.0
         self.spans = []
@@ -15,7 +14,8 @@ class Animator:
         self.spans.append(self.span)
         return self
     
-    def move(self, name, x0, x1):
+    def move(self, name, x0, x1, newSpan=False):
+        if newSpan: self.sspan(1)
         if name not in self.initial: self.initial[name] = x0
         self.span[2].append((name, x0, x1))
         return self
@@ -32,11 +32,7 @@ class Animator:
         self.t0 += other.t0
         return self
     
-    def update1(self, frame=None):
-        if frame is None:
-            t = self.globals['anim'] * self.t0
-        else:
-            t = frame / 50.0
+    def updateTo(self, t):
         set = {}
         for t0, t1, moves in self.spans:
             s = (t - t0) / (t1 - t0) if t1 > t0 else int(t > t0)
@@ -48,6 +44,10 @@ class Animator:
                 self.globals[name] = v
 
     @classmethod
-    def update0(cls, frame=None):
-        global TheAnimator
-        TheAnimator.update1(frame)
+    def update(cls, frame=None):
+        if frame is None:
+            t = self.globals['anim'] * self.t0
+        else:
+            t = frame / 50.0
+        global GlobalAnimator
+        GlobalAnimator.updateTo(t)
