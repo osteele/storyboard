@@ -5,12 +5,6 @@
 
 require 'singleton'
 
-module Animation
-  def self.do
-    yield
-  end
-end
-
 class Animator
   include Singleton
   attr_accessor :recording_head
@@ -39,45 +33,47 @@ class Animator
   end
 end
 
-def reset_animation
-  Animator.instance.reset
-end
-
-# outer wrapper for all animation
-def do_frame(&block)
-  a = Animator.instance
-  a.do_frame(&block)
-end 
-
-# call for the next dur after the current head position
-def interval(dt=1, &block)
-  t0 = Animator.instance.recording_head
-  Animator.instance.call_between(t0, t0 + dt, &block)
-end
-
-# after dur s, call the block on each frame
-def after(dur=1, &block)
-  t0 = Animator.instance.recording_head
-  Animator.instance.call_between(t0 + dur, nil, &block)
-end
-
-# invoke the block over the next dur, with an argument in [0.1..1.0].
-# after that, apply the block to 1.0, continuously
-def over(dur, &block)
-  a = Animator.instance
-  t0 = a.recording_head
-  a.call_between(t0, nil) do
-    # p [t0, a.play_head] if a.play_head < t0 + dur
-    block.call([1.0, (a.play_head - t0) / dur.to_f].min)
+module Animation
+  def reset_animation
+    Animator.instance.reset
   end
-end
 
-# advance the play head dur s (wait dur s before invoking the next animation block)
-def wait_t(dur=1)
-  Animator.instance.recording_head += dur
-end
+  # outer wrapper for all animation
+  def do_frame(&block)
+    a = Animator.instance
+    a.do_frame(&block)
+  end 
 
-# call once, then twice, etc., up to a maximum of m.
-def stacked(count, dur=1)
-  yield
+  # call for the next dur after the current head position
+  def interval(dt=1, &block)
+    t0 = Animator.instance.recording_head
+    Animator.instance.call_between(t0, t0 + dt, &block)
+  end
+
+  # after dur s, call the block on each frame
+  def after(dur=1, &block)
+    t0 = Animator.instance.recording_head
+    Animator.instance.call_between(t0 + dur, nil, &block)
+  end
+
+  # invoke the block over the next dur, with an argument in [0.1..1.0].
+  # after that, apply the block to 1.0, continuously
+  def over(dur, &block)
+    a = Animator.instance
+    t0 = a.recording_head
+    a.call_between(t0, nil) do
+      # p [t0, a.play_head] if a.play_head < t0 + dur
+      block.call([1.0, (a.play_head - t0) / dur.to_f].min)
+    end
+  end
+
+  # advance the play head dur s (wait dur s before invoking the next animation block)
+  def wait_t(dur=1)
+    Animator.instance.recording_head += dur
+  end
+
+  # call once, then twice, etc., up to a maximum of m.
+  def stacked(count, dur=1)
+    yield
+  end
 end
