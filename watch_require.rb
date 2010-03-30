@@ -13,8 +13,14 @@ module Kernel
   def require(*args)
     previously_loaded = $".clone
     value = require_without_watch(*args)
-    ($" - previously_loaded).each do |path|
-      path = $:.first { |dir| File.exists?(File.join(dir, 'singleton.rb')) } unless path =~ /^\//
+    ($" - previously_loaded).each do |feature|
+      path = feature
+      path = $:.
+        reject { |dir| dir =~ /^\w+:/ }.
+        map { |dir| File.expand_path(File.join(dir, feature)) }.
+        select { |p| File.exists?(p) }.
+        first unless path =~ /^\//
+      next unless path
       puts "Watching #{path}" if false
       # FIXME race condition if the file was modified between
       # require_without_watch and now
@@ -23,14 +29,15 @@ module Kernel
     return value
   end
 
-  def reload_watched_requires()
-    REQUIRE_LOAD_TIMES.each do |path, mtime|
+  ## Returns true iff any file was reloaded
+  def reload_watched_requires
+    REQUIRE_LOAD_TIMES.any? do |path, mtime|
       new_mtime = File.mtime(path)
-      return unless new_mtime
-      return if mtime == new_mtime
-      puts "reload #{path} (#{new_mtime} <-> #{mtime})" if false
+      next unless new_mtime
+      next if mtime == new_mtime
       load path
       REQUIRE_LOAD_TIMES[path] = new_mtime
+      true
     end
   end
 end
