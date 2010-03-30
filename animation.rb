@@ -18,7 +18,10 @@ class Animator
   attr_accessor :current_frame
 
   def initialize
-    puts "initialize"
+    self.reset
+  end
+
+  def reset
     @current_frame = 0
   end
 
@@ -36,11 +39,15 @@ class Animator
   end
 end
 
+def reset_animation
+  Animator.instance.reset
+end
+
 # outer wrapper for all animation
 def do_frame(&block)
   a = Animator.instance
   a.do_frame(&block)
-end
+end 
 
 # call for the next dur after the current head position
 def interval(dt=1, &block)
