@@ -10,6 +10,7 @@ class Animator
   attr_accessor :recording_head
   attr_reader :play_head
   attr_accessor :current_frame
+  attr_accessor :speed
 
   def initialize
     self.reset
@@ -17,19 +18,39 @@ class Animator
 
   def reset
     @current_frame = 0
+    @blocks = []
+    @speed = 60
+  end
+
+  def trace?
+    return false
+    return @current_frame < 20
   end
 
   def do_frame
     @recording_head = 0
-    @play_head = @current_frame.to_f / 50
+    @play_head = @current_frame.to_f / @speed
     yield
     @current_frame += 1
     puts "Frame #{current_frame}" if false
   end
 
-  def call_between(t0, t1)
-    p [t0, t1, play_head] if false
-    yield if t0 <= play_head and play_head <= (t1 || play_head)
+  def call_between(t0, t1, options={})
+    return if play_head < t0
+    return if t1 < play_head and not options[:persist]
+    puts "block [#{t0}, #{t1}] (t = #{play_head})" if trace?
+    @blocks << [t0, t1 || play_head]
+    yield
+    @blocks.pop
+    puts "end block" if trace?
+  end
+
+  def block_param
+    t0, t1 = @blocks[-1]
+    s = (play_head - t0).to_f / (t1 - t0)
+    return 0.0 if s.nan?
+    p [play_head, t0, t1, s]  if trace?
+    return [0.0, [1.0, s].min].max
   end
 end
 
@@ -58,10 +79,10 @@ module Animation
 
   # invoke the block over the next dur, with an argument in [0.1..1.0].
   # after that, apply the block to 1.0, continuously
-  def over(dur, &block)
+  def over(dur=1, options={}, &block)
     a = Animator.instance
     t0 = a.recording_head
-    a.call_between(t0, nil) do
+    a.call_between(t0, t0 + dur, options) do
       # p [t0, a.play_head] if a.play_head < t0 + dur
       block.call([1.0, (a.play_head - t0) / dur.to_f].min)
     end
@@ -72,8 +93,11 @@ module Animation
     Animator.instance.recording_head += dur
   end
 
-  # call once, then twice, etc., up to a maximum of m.
-  def stacked(count, dur=1)
-    yield
+  # return a value that varies from s0 to s1 of the immediately
+  # enclosing animation block
+  def slide(s0, s1, t0=nil, t1=nil)
+    t = Animator.instance.block_param
+    t = [0, [1, (t - t0) / (t1 - t0)].min].max if t0 and t1
+    return s0 + t * (s1 - s0)
   end
 end
