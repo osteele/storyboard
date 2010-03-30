@@ -88,6 +88,16 @@ module Animation
     end
   end
 
+  def sequential_blocks(n, dur=1, options={}, &block)
+    n.times do |i|
+      wait = true
+      over(dur, options) do
+        wait = false if yield(i) == false
+      end
+      wait_t(dur) if wait
+    end
+  end
+
   # advance the play head dur s (wait dur s before invoking the next animation block)
   def wait_t(dur=1)
     Animator.instance.recording_head += dur
