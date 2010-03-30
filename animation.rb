@@ -3,6 +3,7 @@
 # to affect the triggering conditions of subsequent animation keywords
 # within the same frame
 
+require 'ostruct'
 require 'singleton'
 
 class Animator
@@ -11,6 +12,7 @@ class Animator
   attr_reader :play_head
   attr_accessor :current_frame
   attr_accessor :speed
+  attr_reader :last_dur
 
   def initialize
     self.reset
@@ -35,6 +37,10 @@ class Animator
     puts "Frame #{current_frame}" if false
   end
 
+  def wait(dur)
+    self.recording_head += dur
+  end
+
   def call_between(t0, t1, options={})
     return if play_head < t0
     return if t1 < play_head and not options[:persist]
@@ -43,6 +49,12 @@ class Animator
     yield
     @blocks.pop
     puts "end block" if trace?
+    @last_dir = t1 - t0
+  end
+
+  def last_block
+    t0, t1 = @blocks[-1]
+    return OpenStruct.new(:duration => t1 - t0)
   end
 
   def block_param
@@ -90,17 +102,20 @@ module Animation
 
   def sequential_blocks(n, dur=1, options={}, &block)
     n.times do |i|
-      wait = true
+      waitp = true
       over(dur, options) do
-        wait = false if yield(i) == false
+        waitp = false if yield(i) == false
       end
-      wait_t(dur) if wait
+      t_wait(dur) if waitp
     end
   end
 
   # advance the play head dur s (wait dur s before invoking the next animation block)
-  def wait_t(dur=1)
-    Animator.instance.recording_head += dur
+  def t_wait(dur=nil)
+    a = Animator.instance
+    #dur ||= a.last_block.duration
+    dur ||= a.last_dur
+    a.wait dur
   end
 
   # return a value that varies from s0 to s1 of the immediately
