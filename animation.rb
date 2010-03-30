@@ -19,7 +19,7 @@ class Animator
   def reset
     @current_frame = 0
     @blocks = []
-    @speed = 60
+    @speed = 120
   end
 
   def trace?
@@ -95,9 +95,22 @@ module Animation
 
   # return a value that varies from s0 to s1 of the immediately
   # enclosing animation block
-  def slide(s0, s1, t0=nil, t1=nil)
+  def var(s0, s1, t0=nil, t1=nil)
     t = Animator.instance.block_param
     t = [0, [1, (t - t0) / (t1 - t0)].min].max if t0 and t1
     return s0 + t * (s1 - s0)
+  end
+
+  def easefn(s)
+    if s < 0.5
+    then 2*s*s
+    else (1 - (2*s-1)*(2*s-3))/2
+    end
+  end
+
+  def ease(s0, s1, t0=nil, t1=nil)
+    s = var(0, 1, t0, t1)
+    s = easefn(s)
+    return s0 + s * (s1 - s0)
   end
 end
