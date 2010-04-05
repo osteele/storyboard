@@ -1,16 +1,17 @@
 = Storyboard
 
-Storyboard is an animation language, for creating mathematical and
+*Storyboard* is an animation language, for creating mathematical and
 pedagogical narratives -- movies that display a sequence of display
 objects, intended to illustrate or explicate different aspects of an
 underlying model or idea, in an order that the author designs when she
 creates the animation.
 
-The emphasis of Storyboard is on pedagogical animations, mostly 2d.
-(Storyboard is intended to work with a variety of back-end rendering
-systems, but Storyboard itself makes no specific contribution to 3d
-rendering or animation.)  Storyboard is not intended as a framework
-for the well-served aspect of character animation.
+The emphasis of Storyboard is on pedagogical animations, mostly in two
+dimensions.  (Storyboard is intended to work with a variety of
+back-end rendering systems, but Storyboard itself makes no specific
+contribution to 3-dimensional rendering or animation.)  Storyboard is
+not intended as a framework for the well-served aspect of character
+animation.
 
 Furthermore, Storyboard is intended for animations that contain a
 sequence of scenes or panels, where each panel contains different
@@ -56,17 +57,17 @@ independently of the use of tools other than a text editor.
 
 == Key Concepts
 
-The key concepts in Storyboard are the *display object*, the *stage*,
-and the *panel*. These describe, respectively, the *what*, the
-*where*, and the *when*.
+The key concepts in Storyboard are the <b>display object</b>, the
+*stage*, and the *panel*. These describe, respectively, the _what_,
+the _where_, and the _when_.
 
-A *display object* is an object that knows how to draw itself.
+A <b>display object</b> is an object that knows how to draw itself.
 Storyboard provides a set of basic display objects that correspond to
 2D primitives, and to objects (such as callouts) from the vocabulary
 of illustration.  Any particular implementation of Storyboard will
-additional binds against a graphics API (such as Processing, OpenGL,
-MathPlotLib, or Vtk) that can be used to create additional display
-objects.
+additional binds against a graphics API (such as
+{Processing}[http://processing.org/], OpenGL, MathPlotLib, or Vtk)
+that can be used to create additional display objects.
 
 A *stage* is a partition of space into different *blocks*, to which
 different display objects or categories of objects can be assigned.
@@ -95,11 +96,11 @@ organizing large storyboards.  The names and descriptions of scenes
 can also be used as an index for rendering part of a storyboard, and
 in the construction of a table of contents for a movie or comic.
 
-An *animation variable* (or "avar") is a variable whose value changes
-continuously as a function of time, or of other variables.  Animation
-variables are used "under the hood" in order to resize, or reposition
-objects.  They are also exposed as a tool for code that defines more
-complex effects as a function of time.
+An <b>animation variable</b> (or "avar") is a variable whose value
+changes continuously as a function of time, or of other variables.
+Animation variables are used "under the hood" in order to resize, or
+reposition objects.  They are also exposed as a tool for code that
+defines more complex effects as a function of time.
 
 Animation variables can be eased.
 
@@ -139,41 +140,45 @@ non-linear order, to manipulate the camera position and field of view
 independently from the specifications in the storyboard, and to
 manipulate the positions of display objects or the values of models.
 
-An *image set* is a set of images that represent the panels or scenes
-within the storyboard.  These images are intended for use in a web
-page or an article.
+An <b>image set</b> is a set of images, one for each of the
+storyboard's panels or scenes.  The images are intended for use in a
+web page or an article.  They are dumped into a directory, whence they
+can be included into a LaTeX or other document.
 
-A *cartoon* is a set of images that are layed out within a page, and annotated with scene descriptions and panel captions.
+A *cartoon* is a set of images that are layed out within a page, and
+annotated with scene descriptions and panel captions.  A cartoon is
+similar to an image set, except that it also includes the document
+that includes (and lays out) the images.
 
-== Programming
+== API
 
 Storyboard is implemented as a set of definitions within the Ruby
 programming language.  The current implementation of Storyboard uses
-the Processing library as a display back end (and therefore requires
-jruby).
+the {Processing}[http://processing.org/] library as a display back end
+(and therefore requires
+{Ruby-Processing}[http://wiki.github.com/jashkenas/ruby-processing/]).
 
-The `storyboard` keyword defines a storyboard.  There should be only
-one of these.  `storyboard` accepts a block.  Within the block, code
-can use the `size`, `background`, `frame_rate`, `author`, `title`,
-`date` keywords, and can make other Processing calls (such as
-`color_mode`).
+The +storyboard+ keyword defines a storyboard.  There should be only
+one of these.  +storyboard+ accepts a block.  Within the block, code
+can use the +size+, +background+, +frame_rate+, +author+, +title+,
++date+ keywords, and can make other
+{Processing}[http://processing.org/] calls (such as +color_mode+).
 
-A display object is an instance of a Ruby classes that implements a
-`draw` method.  `draw` uses the functions of the Processing library.
+A display object is an instance of any Ruby classe that implements a
++draw+ method.  +draw+ uses the functions of the
+{Processing}[http://processing.org/] library.
 
-The `panel` keyword defines a panel.  `panel` takes a block argument,
-whose contents , and add display objects to the stage (via `stage`).
+The +panel+ keyword defines a panel.  +panel+ takes a block argument,
+whose contents , and add display objects to the stage (via +stage+).
 
-Within a panel definition, the `caption` and `duration` keywords
+Within a panel definition, the +caption+ and +duration+ keywords
 define the panel caption and duration, respectively.  The duration is
 in seconds, and defaults to 1s if it is not otherwise specified.
 
 An object that is created within a panel is drawn within all
 subsequent panels within the same scene, until a panel calls the
-`unstage` or `clear_stage` function.  `unstage` function removes its
-argument or arguments from the stage.  `clear_stage` removes all
++unstage+ or +clear_stage+ function.  +unstage+ function removes its
+argument or arguments from the stage.  +clear_stage+ removes all
 display objects from the stage.
 
 Scenes, and storyboard metadata, are not yet implemented.
-
-
