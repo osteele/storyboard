@@ -1,0 +1,179 @@
+= Storyboard
+
+Storyboard is an animation language, for creating mathematical and
+pedagogical narratives -- movies that display a sequence of display
+objects, intended to illustrate or explicate different aspects of an
+underlying model or idea, in an order that the author designs when she
+creates the animation.
+
+The emphasis of Storyboard is on pedagogical animations, mostly 2d.
+(Storyboard is intended to work with a variety of back-end rendering
+systems, but Storyboard itself makes no specific contribution to 3d
+rendering or animation.)  Storyboard is not intended as a framework
+for the well-served aspect of character animation.
+
+Furthermore, Storyboard is intended for animations that contain a
+sequence of scenes or panels, where each panel contains different
+elements and different labels.  It is not intended as a replacement
+for the many capable systems that display, or allow the user to
+interact with, the visual display of a single model or set of models
+using a single technique.
+
+The goal of Storyboard is that a reasonably industrious programmer,
+who is able to envision an animated visual explanation for a
+mathematical concept, should be able to create a fluid, attractive
+movie that demonstrates this concept.  Furthermore, the work that goes
+into creating this movie should also be useful in creating cartoons,
+interactive applications, or illustrations for a web page or academic
+paper.
+
+Specificially, the author has had several such ideas for visual
+explanations, and found himself unable to communicate these because of
+the difficulty of finding an existing animation system that was
+targeted towards this specific domain.  The first use of Storyboard
+will be to realize these explanations.
+
+Some longer-term goals include the exploration of the relationships
+between mathematical explanations and more conventional forms of
+narrative, of relationships between pedagogical animations and
+dramatic sequences, and the use of concepts, such as split-screen and
+montage, from the vocabulary of film.  Concepts such as unity of time
+and space, the relationship between visual shots and narrative beats,
+and the introduction of display objects (or characters) that are then
+cut away from to build suspense, will be explored from the top down
+(by building in system-level constructs that represent these concepts)
+and from the bottom up (by using system-provided abstractions to build
+and explore them).
+
+== Overview
+
+Storyboard is a text-based language.  It is largely declarative, and,
+as such, could be used as the basis for a graphical animation
+construction tool, but it is designed as an authoring language, and to
+be human-readable.  It is intended to embody the concepts and
+abstractions that make the creation of animations directly tractable,
+independently of the use of tools other than a text editor.
+
+== Key Concepts
+
+The key concepts in Storyboard are the *display object*, the *stage*,
+and the *panel*. These describe, respectively, the *what*, the
+*where*, and the *when*.
+
+A *display object* is an object that knows how to draw itself.
+Storyboard provides a set of basic display objects that correspond to
+2D primitives, and to objects (such as callouts) from the vocabulary
+of illustration.  Any particular implementation of Storyboard will
+additional binds against a graphics API (such as Processing, OpenGL,
+MathPlotLib, or Vtk) that can be used to create additional display
+objects.
+
+A *stage* is a partition of space into different *blocks*, to which
+different display objects or categories of objects can be assigned.
+Just as a panel partitions a storyboard by time, a stage partitions
+the spatial extent of the display area into blocks.
+
+A *panel* represents the display state during a period of time (its
+"duration"). A panel encapsulates a set of display objects that are
+drawn during a particular portion of the animation, and describes the
+way that these objects change during the duration of the panel.
+
+The *storyboard* is a collection of panels, display objects, and
+stages; together with metadata (the script's title, author, date).
+The storyboard corresponds to the document in a document-based system
+such as a text editor or word processor (although a single storyboard
+may consist of multiple files).
+
+== Additional Concepts
+
+Each panel has an optional *caption*, that narrates the information
+that the panel displays.  The caption can be displayed on the screen,
+or collected into a narration script.
+
+A *scene* is a sequence of panels.  The scene is convenience for
+organizing large storyboards.  The names and descriptions of scenes
+can also be used as an index for rendering part of a storyboard, and
+in the construction of a table of contents for a movie or comic.
+
+An *animation variable* (or "avar") is a variable whose value changes
+continuously as a function of time, or of other variables.  Animation
+variables are used "under the hood" in order to resize, or reposition
+objects.  They are also exposed as a tool for code that defines more
+complex effects as a function of time.
+
+Animation variables can be eased.
+
+A display object may be derived from a *model*, which is a description
+only of a set of values related to or derived from an object, not how
+they are described.  The derivation may be implemented by writing
+code, or defining equations that relate the display properties of the
+display object to the values of the model.  Several display objects
+may display the same model at the same or different times.
+
+== Output Formats
+
+A storyboard can be displayed as:
+
+A *movie* is a non-interactive linear display of the frames of the
+storyboard, that is intended for continuous display from beginning to
+end (although the viewer may pause and resume it, or play only a
+portion).  Each panel is generally rendered into a sequence of frames;
+these are appended to each other in the same order as the panels are
+ordered within the storyboard.
+
+The scene descriptions and panel captions can be composited onto the
+frames, or exported as a separate script for a narrator to read as a
+voiceover.
+
+The display can also incorporate the names of scenes, and their
+relative position within the script, or order to orient the viewer
+within the logical structure of the movie.
+
+The meta-information within the screenplay may be used to provide
+start or end titles or credits.
+
+An *applet* is an interactive presentation of the information in the
+storyboard.  In addition to the properties of a movie, it might
+provide user interface elements to navigate between the scenes in
+non-linear order, to manipulate the camera position and field of view
+independently from the specifications in the storyboard, and to
+manipulate the positions of display objects or the values of models.
+
+An *image set* is a set of images that represent the panels or scenes
+within the storyboard.  These images are intended for use in a web
+page or an article.
+
+A *cartoon* is a set of images that are layed out within a page, and annotated with scene descriptions and panel captions.
+
+== Programming
+
+Storyboard is implemented as a set of definitions within the Ruby
+programming language.  The current implementation of Storyboard uses
+the Processing library as a display back end (and therefore requires
+jruby).
+
+The `storyboard` keyword defines a storyboard.  There should be only
+one of these.  `storyboard` accepts a block.  Within the block, code
+can use the `size`, `background`, `frame_rate`, `author`, `title`,
+`date` keywords, and can make other Processing calls (such as
+`color_mode`).
+
+A display object is an instance of a Ruby classes that implements a
+`draw` method.  `draw` uses the functions of the Processing library.
+
+The `panel` keyword defines a panel.  `panel` takes a block argument,
+whose contents , and add display objects to the stage (via `stage`).
+
+Within a panel definition, the `caption` and `duration` keywords
+define the panel caption and duration, respectively.  The duration is
+in seconds, and defaults to 1s if it is not otherwise specified.
+
+An object that is created within a panel is drawn within all
+subsequent panels within the same scene, until a panel calls the
+`unstage` or `clear_stage` function.  `unstage` function removes its
+argument or arguments from the stage.  `clear_stage` removes all
+display objects from the stage.
+
+Scenes, and storyboard metadata, are not yet implemented.
+
+
