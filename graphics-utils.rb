@@ -1,3 +1,5 @@
+public
+
 def arrow(x0, y0, x1, y1)
   s = 6
   da = 14 * Math::PI / 180
@@ -12,7 +14,9 @@ end
 
 def with_matrix(options, &block)
   push_matrix
-  translate options[:dx] || 0, options[:dy] || 0 if options[:dx] or options[:dy]
+  dx = (options[:dx] || 0).to_f
+  dy = (options[:dy] || 0).to_f
+  translate dx, dy if options[:dx] or options[:dy]
   yield
 ensure
   pop_matrix

@@ -1,6 +1,7 @@
-# TODO move this into module
+# TODO move this into a module
 
 require 'singleton'
+
 class Storyboard
   include Singleton
 
@@ -36,7 +37,7 @@ class Storyboard
     @current_frame += 1
     for panel in @panels do
       break if time < 0
-      panel.do(context, [time, panel.duration].max)
+      panel.run(context, [time, panel.duration].min)
       time -= panel.duration
     end
     self.objects.each do |object|
@@ -45,7 +46,7 @@ class Storyboard
   end
 
   class Panel
-    attr_reader :duration, :owner, :stage
+    attr_reader :duration, :owner, :stage, :avars
 
     def initialize(owner, block, start_time)
       @owner = owner
@@ -53,6 +54,7 @@ class Storyboard
       @start_time = start_time
       @duration = 1
       @called = false
+      @avars = []
       @stage = Object.new
       class << @stage
         attr_writer :owner
@@ -70,22 +72,52 @@ class Storyboard
       @stage.owner = @owner
     end
 
-    def do(sender, t)
+    def run(sketch, t)
+      s = t / duration
+      avars.each do |avar| avar.s = s end
       return if @called
       @called = true
-      @block.call(self)
-      puts "Panel: #{@caption}" #if @caption
-    end
-
-    def caption(msg)
-      @caption = msg
+      #class << sketch; attr_accessor :panel; end
+      #sketch.panel = self
+      self.instance_eval &@block
+      puts "Panel: #{@caption}"
     end
 
     def reset
       @called = false
     end
+
+    #
+    # DSL methods
+    #
+
+    def caption(msg); @caption = msg; end
+
+    def avar(min=0.0, max=nil)
+      min, max = 0.0, min unless max
+      avar = AVar.new(min, max)
+      self.avars << avar
+      return avar
+    end
+  end
+
+  class AVar
+    attr_accessor :s
+
+    def initialize(min, max)
+      @min, @max = min, max
+      @s = 0.0
+    end
+
+    def to_f
+      return @min + s * (@max - @min)
+    end
   end
 end
+
+#
+# DSL
+#
 
 def panel(&block)
   Storyboard.instance.define_panel &block
@@ -95,14 +127,14 @@ def reset_panels!
   Storyboard.instance.reset_panels!
 end
 
-def draw_frame(sender)
-  Storyboard.instance.draw_current_frame(sender)
-end
-
 class Sketch < Processing::App
   def on_setup(&block); @on_setup = block; end
   def each_frame(&block); @each_frame = block; end
 end
+
+#
+# Runner
+#
 
 def storyboard(&block)
   puts "Defining storyboard"
@@ -112,12 +144,29 @@ def storyboard(&block)
       puts "Starting at #{Time.now}"
       self.instance_eval(&block)
       self.instance_eval(&@on_setup)
+      @broken = false
+    end
+
+    def rewind!
+      Storyboard.instance.rewind!
+      puts "Execution resumed." if @broken
+      @broken = false
     end
 
     define_method(:draw) do
-      Storyboard.instance.rewind! if reload?
-      self.instance_eval(&@each_frame)
-      draw_frame(self)
+      self.rewind! if reload?
+      return if @broken
+      begin
+        self.instance_eval(&@each_frame)
+        #draw_frame(self)
+        Storyboard.instance.draw_current_frame(self)
+      rescue Exception => e
+        puts "Exception occured while running animation:"
+        puts e.to_s
+        puts e.backtrace.join("\n")
+        puts "Execution halted."
+        @broken = true
+      end
     end
   end
 end

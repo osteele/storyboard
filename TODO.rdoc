@@ -1,0 +1,18 @@
+== Features
+* record to quicktime
+* display captions
+* create script
+* create voiceover
+* time according to caption
+* display title, credits
+* more features from design overview
+* record at high definition
+
+== Debugging
+* start at any slide
+* add slider
+* reload main script without error
+
+== DSL
+* reset_panels! should not be necessary
+ 
