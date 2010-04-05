@@ -41,15 +41,13 @@ module Kernel
     verbose = options[:verbose]
     reloads = REQUIRE_LOAD_TIMES.select do |_, path, mtime|
       new_mtime = File.mtime(path)
-      next unless new_mtime
-      next if mtime == new_mtime
-      true
+      new_mtime and mtime != new_mtime
     end
     # if any file changed, load them all
     return unless reloads.any?
     reloads = REQUIRE_LOAD_TIMES if all
     # load them in the same order they were originally loaded
-    reloads = reloads.sort_by { |feature, _, _| -$".index(feature) }
+    reloads = reloads.sort_by { |feature, _, _| $".index(feature) }
     reloads.each do |entry|
       feature, path, _ = entry
       new_mtime = File.mtime(path)
