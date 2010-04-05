@@ -11,6 +11,7 @@ module Kernel
     Kernel::method_defined?(:require_without_watch)
 
   def require(*args)
+    verbose = false
     previously_loaded = $".clone
     value = require_without_watch(*args)
     ($" - previously_loaded).each do |feature|
@@ -20,8 +21,10 @@ module Kernel
         map { |dir| File.expand_path(File.join(dir, feature)) }.
         select { |p| File.exists?(p) }.
         first unless path =~ /^\//
+      puts "Unable to find #{feature}" if verbose and not path
       next unless path
-      puts "Watching #{path}" if false
+      next if REQUIRE_LOAD_TIMES.any? { |_, path0, _| path == path0 }
+      puts "Watching #{feature}" if verbose
       # FIXME race condition if the file was modified between
       # require_without_watch and now
       REQUIRE_LOAD_TIMES << [feature, path, File.mtime(path)]
@@ -44,9 +47,9 @@ module Kernel
     end
     # if any file changed, load them all
     return unless reloads.any?
-    reloads = REQUIRE_LOAD_TIMES if all and reloads.any?
+    reloads = REQUIRE_LOAD_TIMES if all
     # load them in the same order they were originally loaded
-    reloads = reloads.sort_by { |feature, _, _| $".index(feature) }
+    reloads = reloads.sort_by { |feature, _, _| -$".index(feature) }
     reloads.each do |entry|
       feature, path, _ = entry
       new_mtime = File.mtime(path)
