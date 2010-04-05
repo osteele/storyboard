@@ -7,11 +7,20 @@ class Storyboard
   attr_reader :objects, :object_map
 
   def initialize
+    reset_panels!
+    rewind!
+  end
+
+  def reset_panels!
     @panels = []
+    @next_start = 0
+  end
+
+  def rewind!
     @objects = []
     @object_map = {}
-    @next_start = 0
     @current_frame = 0
+    @panels.map &:reset
   end
 
   def define_panel(&block)
@@ -72,9 +81,8 @@ class Storyboard
       @caption = msg
     end
 
-    def staged(name, object=nil)
-      name, object = nil, name unless object
-      owner.objects << object
+    def reset
+      @called = false
     end
   end
 end
@@ -83,6 +91,33 @@ def panel(&block)
   Storyboard.instance.define_panel &block
 end
 
+def reset_panels!
+  Storyboard.instance.reset_panels!
+end
+
 def draw_frame(sender)
   Storyboard.instance.draw_current_frame(sender)
+end
+
+class Sketch < Processing::App
+  def on_setup(&block); @on_setup = block; end
+  def each_frame(&block); @each_frame = block; end
+end
+
+def storyboard(&block)
+  puts "Defining storyboard"
+
+  Sketch.class_eval do
+    define_method(:setup) do
+      puts "Starting at #{Time.now}"
+      self.instance_eval(&block)
+      self.instance_eval(&@on_setup)
+    end
+
+    define_method(:draw) do
+      Storyboard.instance.rewind! if reload?
+      self.instance_eval(&@each_frame)
+      draw_frame(self)
+    end
+  end
 end
