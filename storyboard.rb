@@ -175,48 +175,40 @@ def pause(duration=1)
   panel do end
 end
 
+def storyboard(&block)
+  puts "Defining storyboard"
+
+  Sketch.class_eval do
+    define_method(:run_block) do
+      self.instance_eval(&block)
+    end
+  end
+end
+
 class Sketch < Processing::App
   # DSL methods for inside of +screenplay+ block
   def on_setup(&block); @on_setup = block; end
   def each_frame(&block); @each_frame = block; end
-
-  def storyboard; Storyboard.instance; end
-
-  load_library "control_panel"
-  attr_accessor :running
-  def create_panel
-    control_panel do |c|
-      #c.slider :opacity
-      c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; storyboard.time = t }
-      #c.menu(:options, ['one', 'two', 'three'], 'two') { }
-      #c.checkbox(:paused) { |c| self.running = !c }
-      c.button(:pause!)
-      c.button(:run!)
-      c.button(:rewind!)
-      self.running = true
-    end
-  end
-
-  def pause!; self.running = false; end
-
-  def run!
-    storyboard.time = 0 if storyboard.time > storyboard.duration
-    self.running = true
-    @broken = false
-  end
 end
+
 
 #
 # Runner
 #
 
 class Sketch < Processing::App
+  attr_accessor :make_movie
+  attr_accessor :running
+
+  def storyboard; Storyboard.instance; end
+
   def setup
     puts "Starting at #{Time.now}"
     self.run_block
     self.instance_eval(&@on_setup)
     @broken = false
     @running = true
+    #@make_movie = true
 
     puts "creating panel!"
     create_panel
@@ -234,22 +226,43 @@ class Sketch < Processing::App
     begin
       self.instance_eval(&@each_frame)
       storyboard.draw_current_frame(self, running)
+      save_frame("build/frame-####.png") if running and make_movie and storyboard.time <= storyboard.duration
     rescue Exception => e
-      puts "Exception occured while running animation:"
+      puts "Exception occurred while running animation:"
       puts e.to_s
       puts e.backtrace.join("\n")
       puts "Execution halted."
       @broken = true
     end
   end
+
+  def pause!; self.running = false; end
+
+  def run!
+    storyboard.time = 0 if storyboard.time > storyboard.duration
+    self.running = true
+    @broken = false
+  end
 end
 
-def storyboard(&block)
-  puts "Defining storyboard"
 
-  Sketch.class_eval do
-    define_method(:run_block) do
-      self.instance_eval(&block)
+#
+# Control Panel
+#
+
+class Sketch < Processing::App
+  load_library "control_panel"
+
+  def create_panel
+    control_panel do |c|
+      #c.slider :opacity
+      c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; storyboard.time = t }
+      #c.menu(:options, ['one', 'two', 'three'], 'two') { }
+      #c.checkbox(:paused) { |c| self.running = !c }
+      c.button(:pause!)
+      c.button(:run!)
+      c.button(:rewind!)
+      self.running = true
     end
   end
 end
