@@ -85,6 +85,12 @@ class Storyboard
           @owner.object_map[key]
         end
 
+        def remove!(key)
+          object = @owner.object_map[key]
+          @owner.object_map.delete key
+          @owner.objects.delete object
+        end
+
         def method_missing(name, *args)
           if name.to_s =~ /(.+)=$/ and args.length == 1
             @owner.objects << args[0]
@@ -183,12 +189,15 @@ class Sketch < Processing::App
       #c.slider :opacity
       c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; storyboard.time = t }
       #c.menu(:options, ['one', 'two', 'three'], 'two') { }
-      c.checkbox(:paused) { |c| self.running = !c }
+      #c.checkbox(:paused) { |c| self.running = !c }
+      c.button(:pause!)
       c.button(:run!)
       c.button(:rewind!)
       self.running = true
     end
   end
+
+  def pause!; self.running = false; end
 
   def run!
     storyboard.time = 0 if storyboard.time > storyboard.duration

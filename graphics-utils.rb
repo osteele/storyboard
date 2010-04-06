@@ -1,8 +1,25 @@
 public
 
+class Arrow
+  attr_reader :options
+  def x0; options[:x0] || options[:x]; end
+  def y0; options[:t0] || options[:y]; end
+  def x1; options[:x1] || (self.x0.to_f + (options[:dx] || 0).to_f); end
+  def y1; options[:y1] || (self.y0.to_f + (options[:dy] || 0).to_f); end
+
+  def initialize(options)
+    @options = options
+  end
+
+  def draw(p)
+    p.stroke(*options[:stroke]) if options[:stroke]
+    p.arrow(x0.to_f, y0.to_f, x1.to_f, y1.to_f)
+  end
+end
+
 def arrow(x0, y0, x1, y1)
   s = 6
-  da = 14 * Math::PI / 180
+  da = 16 * Math::PI / 180
   line(x0, y0, x1, y1)
   a0 = Math::atan2(y1-y0, x1-x0) - Math::PI
   for i in [-da, da]
