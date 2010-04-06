@@ -210,40 +210,46 @@ end
 # Runner
 #
 
+class Sketch < Processing::App
+  def setup
+    puts "Starting at #{Time.now}"
+    self.run_block
+    self.instance_eval(&@on_setup)
+    @broken = false
+    @running = true
+
+    puts "creating panel!"
+    create_panel
+  end
+
+  def rewind!
+    Storyboard.instance.rewind!
+    puts "Execution resumed." if @broken
+    @broken = false
+  end
+
+  def draw
+    self.rewind! if reload?
+    return if @broken
+    begin
+      self.instance_eval(&@each_frame)
+      storyboard.draw_current_frame(self, running)
+    rescue Exception => e
+      puts "Exception occured while running animation:"
+      puts e.to_s
+      puts e.backtrace.join("\n")
+      puts "Execution halted."
+      @broken = true
+    end
+  end
+end
+
 def storyboard(&block)
   puts "Defining storyboard"
 
   Sketch.class_eval do
-    define_method(:setup) do
-      puts "Starting at #{Time.now}"
+    define_method(:run_block) do
       self.instance_eval(&block)
-      self.instance_eval(&@on_setup)
-      @broken = false
-      @running = true
-
-      puts "creating panel!"
-      create_panel
-    end
-
-    def rewind!
-      Storyboard.instance.rewind!
-      puts "Execution resumed." if @broken
-      @broken = false
-    end
-
-    define_method(:draw) do
-      self.rewind! if reload?
-      return if @broken
-      begin
-        self.instance_eval(&@each_frame)
-        storyboard.draw_current_frame(self, running)
-      rescue Exception => e
-        puts "Exception occured while running animation:"
-        puts e.to_s
-        puts e.backtrace.join("\n")
-        puts "Execution halted."
-        @broken = true
-      end
     end
   end
 end
