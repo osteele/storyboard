@@ -33,11 +33,20 @@ class Storyboard
     @next_start += @panels.last.duration
   end
 
+  def duration; @next_start; end
+
+  def time; @current_frame / 60.0; end
+
+  def time=(t)
+    self.rewind! if t < self.time
+    @current_frame = t * 60.0
+  end
+
   # call each of the panels up through the current time, with an
   # argument that indicates the proportion through that panel
-  def draw_current_frame(context)
-    time = @current_frame / 60.0
-    @current_frame += 1
+  def draw_current_frame(context, advance=true)
+    time = self.time
+    @current_frame += 1 if advance
     for panel in @panels do
       break if time < 0
       panel.run(context, [time, panel.duration].min)
@@ -164,6 +173,25 @@ class Sketch < Processing::App
   # DSL methods for inside of +screenplay+ block
   def on_setup(&block); @on_setup = block; end
   def each_frame(&block); @each_frame = block; end
+
+  def storyboard; Storyboard.instance; end
+
+  load_library "control_panel"
+  attr_accessor :running
+  def create_panel
+    control_panel do |c|
+      #c.slider :opacity
+      c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; storyboard.time = t }
+      #c.menu(:options, ['one', 'two', 'three'], 'two') { }
+      c.checkbox(:paused) { |c| self.running = !c }
+      c.button(:run!)
+      self.running = true
+    end
+  end
+
+  def run!
+    self.running = true; @broken = false
+  end
 end
 
 #
@@ -179,6 +207,10 @@ def storyboard(&block)
       self.instance_eval(&block)
       self.instance_eval(&@on_setup)
       @broken = false
+      @running = true
+
+      puts "creating panel!"
+      create_panel
     end
 
     def rewind!
@@ -192,8 +224,7 @@ def storyboard(&block)
       return if @broken
       begin
         self.instance_eval(&@each_frame)
-        #draw_frame(self)
-        Storyboard.instance.draw_current_frame(self)
+        storyboard.draw_current_frame(self, running)
       rescue Exception => e
         puts "Exception occured while running animation:"
         puts e.to_s
