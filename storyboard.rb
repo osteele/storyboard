@@ -12,15 +12,19 @@ class Storyboard
     rewind!
   end
 
+  def reset_objects!
+    @objects = []
+    @object_map = {}
+  end
+
   def reset_panels!
     @panels = []
     @next_start = 0
   end
 
   def rewind!
-    @objects = []
-    @object_map = {}
     @current_frame = 0
+    self.reset_objects!
     @panels.map &:reset
   end
 
@@ -33,7 +37,6 @@ class Storyboard
   # argument that indicates the proportion through that panel
   def draw_current_frame(context)
     time = @current_frame / 60.0
-    # p "draw current panel {time} #{@panels.length}"
     @current_frame += 1
     for panel in @panels do
       break if time < 0
@@ -56,8 +59,23 @@ class Storyboard
       @called = false
       @avars = []
       @stage = Object.new
+
       class << @stage
         attr_writer :owner
+
+        def clear!
+          @owner.reset_objects!
+        end
+
+        def []=(key, value)
+          @owner.objects << value
+          @owner.object_map[key] = value
+        end
+
+        def [](key)
+          @owner.object_map[key]
+        end
+
         def method_missing(name, *args)
           if name.to_s =~ /(.+)=$/ and args.length == 1
             @owner.objects << args[0]
@@ -73,14 +91,20 @@ class Storyboard
     end
 
     def run(sketch, t)
+      unless @called
+        @called = true
+        #class << sketch; attr_accessor :panel; end
+        #sketch.panel = self
+        self.instance_eval &@block
+        # Display this after invoking the block, since the blocks sets
+        # the caption
+        puts "Panel: #{@caption || '<<no caption>>'}"
+      end
       s = t / duration
       avars.each do |avar| avar.s = s end
-      return if @called
-      @called = true
-      #class << sketch; attr_accessor :panel; end
-      #sketch.panel = self
-      self.instance_eval &@block
-      puts "Panel: #{@caption}"
+      @@caption_font = sketch.create_font('Helvetica', 10)
+      sketch.text_font @@caption_font
+      sketch.text(@caption, 12, 280) if @caption and t < duration
     end
 
     def reset
@@ -93,7 +117,7 @@ class Storyboard
 
     def caption(msg); @caption = msg; end
 
-    def avar(min=0.0, max=nil)
+    def avar(min=1.0, max=nil)
       min, max = 0.0, min unless max
       avar = AVar.new(min, max)
       self.avars << avar
@@ -119,6 +143,11 @@ end
 # DSL
 #
 
+# for now, this has no runtime effect
+def scene(name_or_number=nil, &block)
+  block.call
+end
+
 def panel(&block)
   Storyboard.instance.define_panel &block
 end
@@ -127,7 +156,12 @@ def reset_panels!
   Storyboard.instance.reset_panels!
 end
 
+def pause(duration=1)
+  panel do end
+end
+
 class Sketch < Processing::App
+  # DSL methods for inside of +screenplay+ block
   def on_setup(&block); @on_setup = block; end
   def each_frame(&block); @each_frame = block; end
 end
