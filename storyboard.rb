@@ -226,7 +226,7 @@ class Sketch < Processing::App
     begin
       self.instance_eval(&@each_frame)
       storyboard.draw_current_frame(self, running)
-      save_frame("build/frame-####.png") if running and make_movie and storyboard.time <= storyboard.duration
+      save_frame("build/frames/frame-####.png") if running and make_movie and storyboard.time <= storyboard.duration
     rescue Exception => e
       puts "Exception occurred while running animation:"
       puts e.to_s
