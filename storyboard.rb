@@ -185,12 +185,15 @@ class Sketch < Processing::App
       #c.menu(:options, ['one', 'two', 'three'], 'two') { }
       c.checkbox(:paused) { |c| self.running = !c }
       c.button(:run!)
+      c.button(:rewind!)
       self.running = true
     end
   end
 
   def run!
-    self.running = true; @broken = false
+    storyboard.time = 0 if storyboard.time > storyboard.duration
+    self.running = true
+    @broken = false
   end
 end
 
