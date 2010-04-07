@@ -138,10 +138,11 @@ module Storyboard
     end
 
     def []=(key, object)
+      key = key.to_sym
       return if @object_map[key] == object
       @objects.delete @object_map[key]
       @objects << object unless @objects.include?(object)
-      @object_map[key.intern] = object
+      @object_map[key] = object
     end
 
     def [](key)
