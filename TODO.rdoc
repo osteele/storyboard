@@ -1,18 +1,29 @@
-== Features
-* record to quicktime
-* display captions
-* create script
-* create voiceover
-* time according to caption
+== Basic Features
+* write script transcript
 * display title, credits
 * more features from design overview
-* record at high definition
 
-== Debugging
+== Debugging Features
+* reload changed files
 * start at any slide
-* add slider
 * reload main script without error
+
+== Advanced Features
+* record to quicktime from within application
+* create voiceover
+* time according to caption
 
 == DSL
 * reset_panels! should not be necessary
- 
+* storyboard definition should be able to go in separate file
+
+== API
+* implement add, etc., for avars
+* implement DisplayObject
+* scene graphs
+* layout
+
+== Code Organization
+* use option parser
+* move classes to module
+* MVC for Storyboard model vs. views

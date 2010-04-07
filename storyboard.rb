@@ -200,19 +200,29 @@ def storyboard(&block)
 
   Sketch.class_eval do
     define_method(:define_storyboard) do
-      self.storyboard_settings = Object.new
-      class << self.storyboard_settings
-        attr_accessor :size, :scale, :color_mode, :background
-        def reset!
-          @size = [300, 300]
-          @scale = [1.0, 1.0]
-          @color_mode = nil
-          @background = nil
-        end
+      self.storyboard_settings = StoryboardDisplaySettings.new
+      if ARGV.include?('--scale')
+        s = ARGV[ARGV.index('--scale') + 1].to_f
+        p ['s', s]
+        self.storyboard_settings.scale = s, s
       end
-      storyboard_settings.reset!
       storyboard_builder.instance_eval(&block)
     end
+  end
+end
+
+class StoryboardDisplaySettings
+  attr_accessor :size, :scale, :color_mode, :background
+
+  def apply_setup_settings(sketch)
+    xsize, ysize = size || [300, 300]
+    xscale, yscale = scale || [1.0, 1.0]
+    sketch.size(xsize * xscale, ysize * yscale)
+  end
+
+  def apply_draw_settings(sketch)
+    sketch.color_mode *color_mode if color_mode
+    sketch.background *background if background
   end
 end
 
@@ -258,15 +268,16 @@ class Sketch < Processing::App
 
     @broken = false
     @running = true
-    #@make_movie = true
+    @make_movie = ARGV.include?('--movie')
+    if @make_movie
+      require 'fileutils'
+      FileUtils::rm_rf 'build/frames'
+    end
 
     self.define_storyboard
-
-    xsize, ysize = storyboard_settings.size
-    xscale, yscale = storyboard_settings.scale
-    size xsize * xscale, ysize * yscale
-
     create_panel
+
+    storyboard_settings.apply_setup_settings(self)
   end
 
   def rewind!
@@ -279,8 +290,7 @@ class Sketch < Processing::App
     self.rewind! if reload?
     return if @broken
     begin
-      color_mode *storyboard_settings.color_mode if storyboard_settings.color_mode
-      background *storyboard_settings.background if storyboard_settings.background
+      storyboard_settings.apply_draw_settings(self)
       push_matrix
       scale *storyboard_settings.scale
       smooth
