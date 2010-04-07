@@ -82,9 +82,13 @@ module Storyboard
       return @caption
     end
 
-    def avar(min=1.0, max=nil)
-      min, max = 0.0, min unless max
-      avar = AVar.new(min, max)
+    def avar(start=1.0, stop=nil)
+      if start.instance_of?(Array)
+        avar = ArrayAvar.new(start, stop)
+      else
+        start, stop = 0.0, start unless stop
+        avar = AVar.new(start, stop)
+      end
       self.avars << avar
       return avar
     end
@@ -107,12 +111,12 @@ module Storyboard
   class AVar
     attr_accessor :s
 
-    def initialize(min, max)
-      @min, @max = min, max
+    def initialize(start, stop)
+      @start, @stop = start.to_f, stop.to_f
       @s = 0.0
     end
 
-    def ease(s)
+    def self.ease(s)
       if s < 0.5
       then 2*s*s
       else (1 - (2*s-1)*(2*s-3))/2
@@ -120,7 +124,20 @@ module Storyboard
     end
 
     def to_f
-      return @min + ease(s) * (@max - @min)
+      return @start + self.class.ease(s) * (@stop - @start)
+    end
+  end
+
+  class ArrayAvar
+    attr_accessor :s
+
+    def initialize(start, stop)
+      @start, @stop = start, stop
+      @s = 0
+    end
+
+    def to_a
+      @start.zip(@stop).map { |a, b| a + AVar.ease(s) * (b - a) }
     end
   end
 
