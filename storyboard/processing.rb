@@ -51,7 +51,7 @@ class Sketch < Processing::App
     if make_movie?
       puts "Creating movie frames"
       require 'fileutils'
-      FileUtils::rm_rf 'build/frames'
+      FileUtils::rm_rf '/tmp/storyboard/frames'
     end
 
     self.run_storyboard_initializer
@@ -79,8 +79,8 @@ class Sketch < Processing::App
         player.draw_frame(self)
         player.advance_frame if running? and not player.done?
       end
-      player.draw_frame_labels(self)
-      save_frame("build/frames/frame-####.png") if make_movie? and running?
+      player.draw_frame_labels(self, !make_movie?)
+      save_frame("/tmp/storyboard/frames/frame-####.png") if make_movie? and running?
     rescue Exception => e
       puts "Exception occurred while running animation:"
       puts e.to_s

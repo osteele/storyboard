@@ -58,14 +58,13 @@ module Storyboard
       draw_current_frame(context)
     end
 
-    def draw_frame_labels(context)
-      draw_frame_label(context)
+    def draw_frame_labels(context, label)
+      draw_frame_label(context) if label
       draw_caption(context)
     end
 
     def advance_frame
       @current_frame += 1
-      @current_frame -= 1 if done?
     end
 
     private
