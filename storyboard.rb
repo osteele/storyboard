@@ -57,8 +57,21 @@ class Storyboard
     end
   end
 
+  def draw_caption(context)
+    time = self.time
+    caption = nil
+    for panel in @panels do
+      break if time < 0
+      caption = panel.caption || caption
+      time -= panel.duration
+    end
+    @@caption_font = context.create_font('Helvetica', 10)
+    context.text_font @@caption_font
+    context.text(caption, 24, context.height - 24) if caption
+  end
+
   class Panel
-    attr_reader :duration, :owner, :stage, :avars
+    attr_reader :duration, :owner, :stage, :avars, :caption
 
     def initialize(owner, block, start_time)
       @owner = owner
@@ -117,9 +130,6 @@ class Storyboard
       end
       s = t / duration
       avars.each do |avar| avar.s = s end
-      @@caption_font = sketch.create_font('Helvetica', 10)
-      sketch.text_font @@caption_font
-      sketch.text(@caption, 12, 280) if @caption and t < duration
     end
 
     def reset
@@ -130,7 +140,10 @@ class Storyboard
     # DSL methods
     #
 
-    def caption(msg); @caption = msg; end
+    def caption(*msg)
+      @caption = msg[0] if msg.any?
+      return @caption
+    end
 
     def avar(min=1.0, max=nil)
       min, max = 0.0, min unless max
@@ -179,16 +192,47 @@ def storyboard(&block)
   puts "Defining storyboard"
 
   Sketch.class_eval do
-    define_method(:run_block) do
-      self.instance_eval(&block)
+    define_method(:define_storyboard) do
+      self.storyboard_settings = Object.new
+      class << self.storyboard_settings
+        attr_accessor :size, :scale, :color_mode, :background
+        def reset!
+          @size = [300, 300]
+          @scale = [1.0, 1.0]
+          @color_mode = nil
+          @background = nil
+        end
+      end
+      storyboard_settings.reset!
+      storyboard_builder.instance_eval(&block)
     end
   end
 end
 
 class Sketch < Processing::App
-  # DSL methods for inside of +screenplay+ block
-  def on_setup(&block); @on_setup = block; end
-  def each_frame(&block); @each_frame = block; end
+  attr_accessor :storyboard_settings
+
+  def storyboard_builder
+    builder = Object.new
+    class << builder
+      attr_accessor :settings
+      # DSL methods for inside of +screenplay+ block
+      def size(x, y=nil)
+        settings.size = [x, y || x]
+      end
+      def scale(x=1.0, y=nil)
+        settings.scale = [x, y || x]
+      end
+      def color_mode(*args)
+        settings.color_mode = args
+      end
+      def background(*args)
+        settings.background = args
+      end
+    end
+    builder.settings = self.storyboard_settings
+    return builder
+  end
 end
 
 
@@ -204,13 +248,17 @@ class Sketch < Processing::App
 
   def setup
     puts "Starting at #{Time.now}"
-    self.run_block
-    self.instance_eval(&@on_setup)
+
     @broken = false
     @running = true
     #@make_movie = true
 
-    puts "creating panel!"
+    self.define_storyboard
+
+    xsize, ysize = storyboard_settings.size
+    xscale, yscale = storyboard_settings.scale
+    size xsize * xscale, ysize * yscale
+
     create_panel
   end
 
@@ -224,8 +272,14 @@ class Sketch < Processing::App
     self.rewind! if reload?
     return if @broken
     begin
-      self.instance_eval(&@each_frame)
+      color_mode *storyboard_settings.color_mode if storyboard_settings.color_mode
+      background *storyboard_settings.background if storyboard_settings.background
+      push_matrix
+      scale *storyboard_settings.scale
+      smooth
       storyboard.draw_current_frame(self, running)
+      pop_matrix
+      storyboard.draw_caption(self)
       save_frame("build/frames/frame-####.png") if running and make_movie and storyboard.time <= storyboard.duration
     rescue Exception => e
       puts "Exception occurred while running animation:"

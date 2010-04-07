@@ -4,8 +4,10 @@ class Arrow
   attr_reader :options
   def x0; options[:x0] || options[:x]; end
   def y0; options[:t0] || options[:y]; end
-  def x1; options[:x1] || (self.x0.to_f + (options[:dx] || 0).to_f); end
-  def y1; options[:y1] || (self.y0.to_f + (options[:dy] || 0).to_f); end
+  def x1; options[:x1] || x0.to_f + dx.to_f; end
+  def y1; options[:y1] || y0.to_f + dy.to_f; end
+  def dx; options[:dx] || 0; end
+  def dy; options[:dy] || 0; end
 
   def initialize(options)
     @options = options
