@@ -1,10 +1,12 @@
 module Storyboard
   class Player
-    attr_reader :storyboard, :stage_manager
+    attr_reader :storyboard, :stage_manager, :frame_rate
 
     def initialize(storyboard)
       @storyboard = storyboard
       @stage_manager = StageManager.new
+      @selected_panels = nil
+      @frame_rate = 60.0
       rewind!
     end
 
@@ -12,21 +14,40 @@ module Storyboard
       storyboard.panels
     end
 
+    def selected_panels
+      return @selected_panels if @selected_panels
+      panels = self.panels
+      if ARGV.include?('--scene')
+        scene_number = ARGV[ARGV.index('--scene') + 1].to_i
+        scene = storyboard.scenes.find { |s| s.number == scene_number }
+        panels = scene.panels
+      end
+      @selected_panels = panels
+    end
+
     def rewind!
-      @current_frame = 0
+      @current_frame = self.start_time * frame_rate
       stage_manager.clear!
       panels.map &:reset
     end
 
-    def done?
-      self.time > storyboard.duration
+    def start_time
+      selected_panels.any? ? selected_panels.first.start_time : 0
     end
 
-    def time; @current_frame / 60.0; end
+    def end_time
+      selected_panels.any? ? selected_panels.last.end_time : 0
+    end
+
+    def done?
+      self.time > self.duration
+    end
+
+    def time; @current_frame / frame_rate; end
 
     def time=(t)
       self.rewind! if t < self.time
-      @current_frame = t * 60.0
+      @current_frame = t * frame_rate
     end
 
     def draw_frame(context)
