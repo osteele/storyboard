@@ -132,13 +132,18 @@ module Storyboard
       @object_map = {}
     end
 
-    def []=(key, value)
-      @objects << value
-      @object_map[key] = value
+    def []=(key, object)
+      @objects << object unless @objects.include?(object)
+      @object_map[key.intern] = object
     end
 
     def [](key)
       @object_map[key]
+    end
+
+    # adds an object, without a name
+    def <<(object)
+      @objects << object
     end
 
     def remove!(key)
@@ -149,8 +154,7 @@ module Storyboard
 
     def method_missing(name, *args)
       if name.to_s =~ /(.+)=$/ and args.length == 1
-        @objects << args[0]
-        @object_map[$1.intern] = args[0]
+        self[$1] = args[0]
       elsif args.empty? and @object_map.include?(name)
         return @object_map[name]
       else

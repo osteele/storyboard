@@ -22,6 +22,7 @@
 * implement DisplayObject
 * scene graphs
 * layout
+* add helpers
 
 == Code Organization
 * use option parser

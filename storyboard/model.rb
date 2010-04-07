@@ -21,7 +21,7 @@ module Storyboard
   end
 
   class Panel
-    attr_reader :duration, :owner, :avars, :caption, :start_time, :number, :stage
+    attr_reader :duration, :owner, :scene, :avars, :caption, :start_time, :number, :stage
 
     def initialize(storyboard, scene, block, start_time, number)
       @owner = storyboard
@@ -43,8 +43,7 @@ module Storyboard
     def run(sketch, runner, time)
       unless @called
         @called = true
-        @stage = runner.stage_manager
-        self.instance_eval &@block
+        context(runner).instance_eval &@block
         # Display this after invoking the block, since the blocks sets
         # the caption
         puts "#{self.name}" + (self.caption ? ": #{self.caption}" : '')
@@ -59,6 +58,19 @@ module Storyboard
 
     def reset
       @called = false
+    end
+
+    def context(runner)
+      scene.class.class_eval do
+        attr_accessor :build_panel, :stage
+      end
+      scene.instance_eval do
+        def caption(*args); @build_panel.caption(*args); end
+        def avar(*args); @build_panel.avar(*args); end
+      end
+      scene.build_panel = self
+      scene.stage = runner.stage_manager
+      scene
     end
 
     #
