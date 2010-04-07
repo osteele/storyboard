@@ -75,7 +75,7 @@ class Sketch < Processing::App
         player.advance_frame if running?
       end
       player.draw_frame_labels(self)
-      save_frame("build/frames/frame-####.png") if make_movie? and not running? and player.done?
+      save_frame("build/frames/frame-####.png") if make_movie? and running?
     rescue Exception => e
       puts "Exception occurred while running animation:"
       puts e.to_s
@@ -83,7 +83,7 @@ class Sketch < Processing::App
       puts "Execution halted."
       @broken = true
     end
-    exit if make_movie? and storyboard.done?
+    exit if make_movie? and player.done?
   end
 
   def pause!; self.running = false; end
