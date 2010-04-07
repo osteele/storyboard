@@ -1,9 +1,10 @@
 module Storyboard
   class Player
-    attr_reader :storyboard, :objects, :object_map
+    attr_reader :storyboard, :stage_manager
 
     def initialize(storyboard)
       @storyboard = storyboard
+      @stage_manager = StageManager.new
       rewind!
     end
 
@@ -13,7 +14,7 @@ module Storyboard
 
     def rewind!
       @current_frame = 0
-      reset_objects!
+      stage_manager.clear!
       panels.map &:reset
     end
 
@@ -41,12 +42,6 @@ module Storyboard
       @current_frame += 1
     end
 
-    # called from stage manager
-    def reset_objects!
-      @objects = []
-      @object_map = {}
-    end
-
     private
 
     # call each of the panels up through the current time, with an
@@ -58,7 +53,7 @@ module Storyboard
         panel.run(context, self, [time, panel.duration].min) if panel
         time -= panel.duration
       end
-      self.objects.each do |object|
+      stage_manager.objects.each do |object|
         object.draw context
       end
     end
@@ -96,6 +91,45 @@ module Storyboard
       @@frame_label_font ||= context.create_font('Helvetica', 8)
       context.text_font @@frame_label_font
       context.text("#{panel ? panel.name : nil} frame #{@current_frame}", 2, 12)
+    end
+  end
+
+  class StageManager
+    attr_reader :objects
+
+    def initialize
+      clear!
+    end
+
+    def clear!
+      @objects = []
+      @object_map = {}
+    end
+
+    def []=(key, value)
+      @objects << value
+      @object_map[key] = value
+    end
+
+    def [](key)
+      @object_map[key]
+    end
+
+    def remove!(key)
+      object = @object_map[key]
+      @object_map.delete key
+      @objects.delete object
+    end
+
+    def method_missing(name, *args)
+      if name.to_s =~ /(.+)=$/ and args.length == 1
+        @objects << args[0]
+        @object_map[$1.intern] = args[0]
+      elsif args.empty? and @object_map.include?(name)
+        return @object_map[name]
+      else
+        super
+      end
     end
   end
 end

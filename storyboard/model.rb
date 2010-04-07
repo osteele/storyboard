@@ -34,55 +34,16 @@ module Storyboard
       @avars = []
     end
 
-    def create_stage(stage_owner)
-      @stage = Object.new
-
-      class << @stage
-        attr_writer :owner
-
-        def clear!
-          @owner.reset_objects!
-        end
-
-        def []=(key, value)
-          @owner.objects << value
-          @owner.object_map[key] = value
-        end
-
-        def [](key)
-          @owner.object_map[key]
-        end
-
-        def remove!(key)
-          object = @owner.object_map[key]
-          @owner.object_map.delete key
-          @owner.objects.delete object
-        end
-
-        def method_missing(name, *args)
-          if name.to_s =~ /(.+)=$/ and args.length == 1
-            @owner.objects << args[0]
-            @owner.object_map[$1.intern] = args[0]
-          elsif name.to_s !~ /=$/ and args.empty? and @owner.object_map.include?(name)
-            return @owner.object_map[name]
-          else
-            super
-          end
-        end
-      end
-      @stage.owner = stage_owner
-    end
-
     def end_time; start_time + duration; end
 
     def name
       "Scene #{@scene.number} panel #{@number}"
     end
 
-    def run(sketch, stage_owner, time)
+    def run(sketch, runner, time)
       unless @called
         @called = true
-        create_stage(stage_owner)
+        @stage = runner.stage_manager
         self.instance_eval &@block
         # Display this after invoking the block, since the blocks sets
         # the caption
