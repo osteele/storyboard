@@ -67,6 +67,8 @@ module Storyboard
       scene.instance_eval do
         def caption(*args); @build_panel.caption(*args); end
         def avar(*args); @build_panel.avar(*args); end
+        def animate_by(*args); @build_panel.animate_by(*args); end
+        def animate_to(*args); @build_panel.animate_to(*args); end
       end
       scene.build_panel = self
       scene.stage = runner.stage_manager
@@ -82,15 +84,26 @@ module Storyboard
       return @caption
     end
 
-    def avar(start=1.0, stop=nil)
+    def avar(start=1.0, stop=nil, &block)
       if start.instance_of?(Array)
         avar = ArrayAvar.new(start, stop)
       else
         start, stop = 0.0, start unless stop
-        avar = AVar.new(start, stop)
+        avar = AVar.new(start, stop, &block)
       end
       self.avars << avar
       return avar
+    end
+
+    def animate_by(target, getter, delta)
+      start = target.send(getter).to_f
+      animate_to(target, getter, start.to_f + delta.to_f)
+    end
+
+    def animate_to(target, getter, stop)
+      start = target.send(getter).to_f
+      setter = :"#{getter}="
+      avar(start, stop) do |v| target.send(setter, v) end
     end
   end
 
@@ -111,9 +124,16 @@ module Storyboard
   class AVar
     attr_accessor :s
 
-    def initialize(start, stop)
+    def initialize(start, stop, &block)
       @start, @stop = start.to_f, stop.to_f
       @s = 0.0
+      @block = block
+    end
+
+    def s=(value)
+      changed = @s != value
+      @s = value
+      @block.call(self.to_f) if changed and not @block.nil?
     end
 
     def self.ease(s)
