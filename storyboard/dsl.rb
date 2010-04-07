@@ -77,6 +77,7 @@ def panel(&block)
 end
 
 def reset_panels!
+  Storyboard::StoryboardBuilder.reset!
   Storyboard::Storyboard.instance.reset_panels!
 end
 

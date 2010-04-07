@@ -1,5 +1,6 @@
 # Storyboard runner and back end for Ruby-Processing
 
+# TODO move this to DSL
 class Sketch < Processing::App
   attr_accessor :storyboard_settings
 
@@ -32,7 +33,7 @@ end
 #
 
 class Sketch < Processing::App
-  attr_reader :player, :runner
+  attr_reader :player
   attr_accessor :running
 
   def make_movie?; @make_movie; end
@@ -57,6 +58,7 @@ class Sketch < Processing::App
     create_panel unless make_movie?
 
     storyboard_settings.apply_global_settings(self)
+    self.run!
   end
 
   def rewind!
@@ -66,7 +68,10 @@ class Sketch < Processing::App
   end
 
   def draw
-    self.rewind! if reload_watched_requires :all => true, :verbose => true
+    if reload_watched_requires :all => true, :verbose => true
+      self.setup if player.storyboard != storyboard
+      self.rewind!
+    end
     return if @broken
     begin
       with_matrix do
@@ -89,9 +94,13 @@ class Sketch < Processing::App
   def pause!; self.running = false; end
 
   def run!
-    @running = true
     @broken = false
+    @running = true
     player.rewind! if player.done?
+  end
+
+  def time=(time)
+    player.time = time
   end
 end
 
@@ -106,7 +115,7 @@ class Sketch < Processing::App
   def create_panel
     control_panel do |c|
       #c.slider :opacity
-      c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; runner.time = t if runner }
+      c.slider(:Time, 0..(storyboard.duration)) { |t| self.time = t; self.pause! }
       #c.menu(:options, ['one', 'two', 'three'], 'two') { }
       #c.checkbox(:paused) { |c| self.running = !c }
       c.button(:pause!)

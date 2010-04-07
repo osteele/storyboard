@@ -4,8 +4,6 @@
 * more features from design overview
 
 == Debugging Features
-* reload changed files
-* start at any slide
 * reload main script without error
 
 == Advanced Features
