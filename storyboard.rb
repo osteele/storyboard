@@ -2,72 +2,74 @@
 
 require 'singleton'
 
-class Storyboard
-  include Singleton
+module Storyboard
+  class Storyboard
+    include Singleton
 
-  attr_reader :objects, :object_map
+    attr_reader :objects, :object_map
 
-  def initialize
-    reset_panels!
-    rewind!
-  end
-
-  def reset_objects!
-    @objects = []
-    @object_map = {}
-  end
-
-  def reset_panels!
-    @panels = []
-    @next_start = 0
-  end
-
-  def rewind!
-    @current_frame = 0
-    self.reset_objects!
-    @panels.map &:reset
-  end
-
-  def define_panel(&block)
-    @panels << Panel.new(self, block, @next_start)
-    @next_start += @panels.last.duration
-  end
-
-  def duration; @next_start; end
-
-  def time; @current_frame / 60.0; end
-
-  def time=(t)
-    self.rewind! if t < self.time
-    @current_frame = t * 60.0
-  end
-
-  # call each of the panels up through the current time, with an
-  # argument that indicates the proportion through that panel
-  def draw_current_frame(context, advance=true)
-    time = self.time
-    @current_frame += 1 if advance
-    for panel in @panels do
-      break if time < 0
-      panel.run(context, [time, panel.duration].min)
-      time -= panel.duration
+    def initialize
+      reset_panels!
+      rewind!
     end
-    self.objects.each do |object|
-      object.draw context
-    end
-  end
 
-  def draw_caption(context)
-    time = self.time
-    caption = nil
-    for panel in @panels do
-      break if time < 0
-      caption = panel.caption || caption
-      time -= panel.duration
+    def reset_objects!
+      @objects = []
+      @object_map = {}
     end
-    @@caption_font = context.create_font('Helvetica', 10)
-    context.text_font @@caption_font
-    context.text(caption, 24, context.height - 24) if caption
+
+    def reset_panels!
+      @panels = []
+      @next_start = 0
+    end
+
+    def rewind!
+      @current_frame = 0
+      self.reset_objects!
+      @panels.map &:reset
+    end
+
+    def define_panel(&block)
+      @panels << Panel.new(self, block, @next_start)
+      @next_start += @panels.last.duration
+    end
+
+    def duration; @next_start; end
+
+    def time; @current_frame / 60.0; end
+
+    def time=(t)
+      self.rewind! if t < self.time
+      @current_frame = t * 60.0
+    end
+
+    # call each of the panels up through the current time, with an
+    # argument that indicates the proportion through that panel
+    def draw_current_frame(context, advance=true)
+      time = self.time
+      @current_frame += 1 if advance
+      for panel in @panels do
+        break if time < 0
+        panel.run(context, [time, panel.duration].min)
+        time -= panel.duration
+      end
+      self.objects.each do |object|
+        object.draw context
+      end
+    end
+
+    def draw_caption(context)
+      time = self.time
+      caption = nil
+      for panel in @panels do
+        break if time < 0
+        caption = panel.caption || caption
+        time -= panel.duration
+      end
+      @@caption_font = context.create_font('Helvetica', 10)
+      context.text_font @@caption_font
+      context.text(caption, 24, context.height - 24) if caption
+    end
   end
 
   class Panel
@@ -172,38 +174,35 @@ class Storyboard
       return @min + ease(s) * (@max - @min)
     end
   end
+
+  class DisplaySettings
+    attr_accessor :size, :scale, :color_mode, :background
+
+    def apply_global_settings(sketch)
+      xsize, ysize = size || [300, 300]
+      xscale, yscale = scale || [1.0, 1.0]
+      sketch.size(xsize * xscale, ysize * yscale)
+    end
+
+    def apply_frame_settings(sketch)
+      sketch.color_mode *color_mode if color_mode
+      sketch.background *background if background
+      sketch.smooth
+    end
+  end
 end
 
 #
 # DSL
 #
 
-# for now, this has no runtime effect
-def scene(name_or_number=nil, &block)
-  block.call
-end
-
-def panel(&block)
-  Storyboard.instance.define_panel &block
-end
-
-def reset_panels!
-  Storyboard.instance.reset_panels!
-end
-
-def pause(duration=1)
-  panel do end
-end
-
 def storyboard(&block)
   puts "Defining storyboard"
-
   Sketch.class_eval do
     define_method(:define_storyboard) do
-      self.storyboard_settings = StoryboardDisplaySettings.new
+      self.storyboard_settings = Storyboard::DisplaySettings.new
       if ARGV.include?('--scale')
         s = ARGV[ARGV.index('--scale') + 1].to_f
-        p ['s', s]
         self.storyboard_settings.scale = s, s
       end
       storyboard_builder.instance_eval(&block)
@@ -211,19 +210,20 @@ def storyboard(&block)
   end
 end
 
-class StoryboardDisplaySettings
-  attr_accessor :size, :scale, :color_mode, :background
+def scene(name_or_number=nil, &block)
+  block.call
+end
 
-  def apply_setup_settings(sketch)
-    xsize, ysize = size || [300, 300]
-    xscale, yscale = scale || [1.0, 1.0]
-    sketch.size(xsize * xscale, ysize * yscale)
-  end
+def panel(&block)
+  Storyboard::Storyboard.instance.define_panel &block
+end
 
-  def apply_draw_settings(sketch)
-    sketch.color_mode *color_mode if color_mode
-    sketch.background *background if background
-  end
+def reset_panels!
+  Storyboard::Storyboard.instance.reset_panels!
+end
+
+def pause(duration=1)
+  panel do end
 end
 
 class Sketch < Processing::App
@@ -261,7 +261,7 @@ class Sketch < Processing::App
   attr_accessor :make_movie
   attr_accessor :running
 
-  def storyboard; Storyboard.instance; end
+  def storyboard; Storyboard::Storyboard.instance; end
 
   def setup
     puts "Starting at #{Time.now}"
@@ -277,11 +277,11 @@ class Sketch < Processing::App
     self.define_storyboard
     create_panel
 
-    storyboard_settings.apply_setup_settings(self)
+    storyboard_settings.apply_global_settings(self)
   end
 
   def rewind!
-    Storyboard.instance.rewind!
+    storyboard.rewind!
     puts "Execution resumed." if @broken
     @broken = false
   end
@@ -290,12 +290,10 @@ class Sketch < Processing::App
     self.rewind! if reload?
     return if @broken
     begin
-      storyboard_settings.apply_draw_settings(self)
-      push_matrix
-      scale *storyboard_settings.scale
-      smooth
-      storyboard.draw_current_frame(self, running)
-      pop_matrix
+      with_matrix do
+        storyboard_settings.apply_frame_settings(self)
+        storyboard.draw_current_frame(self, running)
+      end
       storyboard.draw_caption(self)
       save_frame("build/frames/frame-####.png") if running and make_movie and storyboard.time <= storyboard.duration
     rescue Exception => e

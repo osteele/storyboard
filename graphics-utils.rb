@@ -31,7 +31,7 @@ def arrow(x0, y0, x1, y1)
   end
 end
 
-def with_matrix(options, &block)
+def with_matrix(options={}, &block)
   push_matrix
   dx = (options[:dx] || 0).to_f
   dy = (options[:dy] || 0).to_f

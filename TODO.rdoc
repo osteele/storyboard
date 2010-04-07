@@ -25,5 +25,4 @@
 
 == Code Organization
 * use option parser
-* move classes to module
 * MVC for Storyboard model vs. views
