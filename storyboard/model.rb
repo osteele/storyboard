@@ -8,12 +8,6 @@ module Storyboard
 
     def initialize
       reset_panels!
-      rewind!
-    end
-
-    def reset_objects!
-      @objects = []
-      @object_map = {}
     end
 
     def reset_panels!
@@ -21,62 +15,13 @@ module Storyboard
       @panels = []
     end
 
-    def rewind!
-      @current_frame = 0
-      self.reset_objects!
-      @panels.map &:reset
-    end
-
-    def done?
-      self.time > self.duration
-    end
-
     def duration
       panels.any? ? panels.last.end_time : 0
-    end
-
-    def time; @current_frame / 60.0; end
-
-    def time=(t)
-      self.rewind! if t < self.time
-      @current_frame = t * 60.0
-    end
-
-    # call each of the panels up through the current time, with an
-    # argument that indicates the proportion through that panel
-    def draw_current_frame(context)
-      time = self.time
-      for panel in @panels do
-        break if time < 0
-        panel.run(context, [time, panel.duration].min)
-        time -= panel.duration
-      end
-      self.objects.each do |object|
-        object.draw context
-      end
-    end
-
-    def advance_frame
-      @current_frame += 1
-    end
-
-    def draw_caption(context)
-      time = self.time
-      caption = nil
-      for panel in @panels do
-        break if time < 0
-        caption = panel.caption || caption
-        time -= panel.duration
-      end
-      return unless panel
-      @@caption_font = context.create_font('Helvetica', 10)
-      context.text_font @@caption_font
-      context.text(panel.name + ": " + caption, 24, context.height - 24)
     end
   end
 
   class Panel
-    attr_reader :duration, :owner, :stage, :avars, :caption, :start_time, :number
+    attr_reader :duration, :owner, :avars, :caption, :start_time, :number, :stage
 
     def initialize(storyboard, scene, block, start_time, number)
       @owner = storyboard
@@ -87,6 +32,9 @@ module Storyboard
       @duration = 1
       @called = false
       @avars = []
+    end
+
+    def create_stage(stage_owner)
       @stage = Object.new
 
       class << @stage
@@ -122,7 +70,7 @@ module Storyboard
           end
         end
       end
-      @stage.owner = @owner
+      @stage.owner = stage_owner
     end
 
     def end_time; start_time + duration; end
@@ -131,15 +79,20 @@ module Storyboard
       "Scene #{@scene.number} panel #{@number}"
     end
 
-    def run(sketch, t)
+    def run(sketch, stage_owner, time)
       unless @called
         @called = true
+        create_stage(stage_owner)
         self.instance_eval &@block
         # Display this after invoking the block, since the blocks sets
         # the caption
-        puts "Panel: #{@caption || '<<no caption>>'}"
+        puts "#{self.name}" + (self.caption ? ": #{self.caption}" : '')
       end
-      s = t / duration
+      update_avars(time)
+    end
+
+    def update_avars(time)
+      s = time.to_f / duration
       avars.each do |avar| avar.s = s end
     end
 
@@ -171,6 +124,10 @@ module Storyboard
       @name = name
       @number = number
       @panels = []
+    end
+
+    def name
+      "Scene #{number}"
     end
   end
 

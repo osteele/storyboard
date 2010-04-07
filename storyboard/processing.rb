@@ -32,6 +32,9 @@ end
 #
 
 class Sketch < Processing::App
+  attr_reader :player, :runner
+  attr_accessor :running
+
   def make_movie?; @make_movie; end
   def running?; @running and not @broken; end
   def storyboard; Storyboard::Storyboard.instance; end
@@ -41,6 +44,7 @@ class Sketch < Processing::App
 
     @broken = false
     @running = true
+    @player = Storyboard::Player.new(storyboard)
     @make_movie = ARGV.include?('--movie')
 
     if make_movie?
@@ -56,7 +60,7 @@ class Sketch < Processing::App
   end
 
   def rewind!
-    storyboard.rewind!
+    player.rewind!
     puts "Execution resumed." if @broken
     @broken = false
   end
@@ -67,11 +71,11 @@ class Sketch < Processing::App
     begin
       with_matrix do
         storyboard_settings.apply_frame_settings(self)
-        storyboard.draw_current_frame(self)
-        storyboard.advance_frame if running?
+        player.draw_frame(self)
+        player.advance_frame if running?
       end
-      storyboard.draw_caption(self)
-      save_frame("build/frames/frame-####.png") if running? and make_movie? and storyboard.time <= storyboard.duration
+      player.draw_frame_labels(self)
+      save_frame("build/frames/frame-####.png") if make_movie? and not running? and player.done?
     rescue Exception => e
       puts "Exception occurred while running animation:"
       puts e.to_s
@@ -82,12 +86,12 @@ class Sketch < Processing::App
     exit if make_movie? and storyboard.done?
   end
 
-  def pause!; @running = false; end
+  def pause!; self.running = false; end
 
   def run!
     @running = true
     @broken = false
-    storyboard.rewind! if storyboard.done?
+    player.rewind! if player.done?
   end
 end
 
@@ -102,7 +106,7 @@ class Sketch < Processing::App
   def create_panel
     control_panel do |c|
       #c.slider :opacity
-      c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; storyboard.time = t }
+      c.slider(:Time, 0..(storyboard.duration)) {|t| self.running = false; @broken = false; runner.time = t if runner }
       #c.menu(:options, ['one', 'two', 'three'], 'two') { }
       #c.checkbox(:paused) { |c| self.running = !c }
       c.button(:pause!)

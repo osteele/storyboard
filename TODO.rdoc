@@ -24,5 +24,4 @@
 * layout
 
 == Code Organization
-* create separate Player class
 * use option parser
