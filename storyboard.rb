@@ -161,8 +161,15 @@ class Storyboard
       @s = 0.0
     end
 
+    def ease(s)
+      if s < 0.5
+      then 2*s*s
+      else (1 - (2*s-1)*(2*s-3))/2
+      end
+    end
+
     def to_f
-      return @min + s * (@max - @min)
+      return @min + ease(s) * (@max - @min)
     end
   end
 end
