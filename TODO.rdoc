@@ -2,6 +2,7 @@
 * write script transcript
 * display title, credits
 * more features from design overview
+* in movie mode, quit when we reach the end
 
 == Debugging Features
 * reload changed files
@@ -24,5 +25,5 @@
 * layout
 
 == Code Organization
+* create separate Player class
 * use option parser
-* MVC for Storyboard model vs. views

@@ -4,7 +4,7 @@ module Storyboard
   class Storyboard
     include Singleton
 
-    attr_reader :objects, :object_map
+    attr_reader :scenes, :panels, :objects, :object_map
 
     def initialize
       reset_panels!
@@ -17,8 +17,8 @@ module Storyboard
     end
 
     def reset_panels!
+      @scenes = []
       @panels = []
-      @next_start = 0
     end
 
     def rewind!
@@ -27,12 +27,9 @@ module Storyboard
       @panels.map &:reset
     end
 
-    def define_panel(&block)
-      @panels << Panel.new(self, block, @next_start)
-      @next_start += @panels.last.duration
+    def duration
+      panels.any? ? panels.last.end_time : 0
     end
-
-    def duration; @next_start; end
 
     def time; @current_frame / 60.0; end
 
@@ -64,17 +61,20 @@ module Storyboard
         caption = panel.caption || caption
         time -= panel.duration
       end
+      return unless panel
       @@caption_font = context.create_font('Helvetica', 10)
       context.text_font @@caption_font
-      context.text(caption, 24, context.height - 24) if caption
+      context.text(panel.name + ": " + caption, 24, context.height - 24)
     end
   end
 
   class Panel
-    attr_reader :duration, :owner, :stage, :avars, :caption
+    attr_reader :duration, :owner, :stage, :avars, :caption, :start_time, :number
 
-    def initialize(owner, block, start_time)
-      @owner = owner
+    def initialize(storyboard, scene, block, start_time, number)
+      @owner = storyboard
+      @scene = scene
+      @number = number
       @block = block
       @start_time = start_time
       @duration = 1
@@ -118,11 +118,15 @@ module Storyboard
       @stage.owner = @owner
     end
 
+    def end_time; start_time + duration; end
+
+    def name
+      "Scene #{@scene.number} panel #{@number}"
+    end
+
     def run(sketch, t)
       unless @called
         @called = true
-        #class << sketch; attr_accessor :panel; end
-        #sketch.panel = self
         self.instance_eval &@block
         # Display this after invoking the block, since the blocks sets
         # the caption
@@ -150,6 +154,16 @@ module Storyboard
       avar = AVar.new(min, max)
       self.avars << avar
       return avar
+    end
+  end
+
+  class Scene
+    attr_reader :panels, :number
+
+    def initialize(name, number)
+      @name = name
+      @number = number
+      @panels = []
     end
   end
 

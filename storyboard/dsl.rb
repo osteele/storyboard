@@ -4,11 +4,19 @@ module Storyboard
   class StoryboardBuilder
     include Singleton
 
-    attr_reader :storyboard, :current_scene
+    attr_reader :storyboard, :current_scene, :record_head
 
     def self.method_missing(name, *args, &block)
       return self.instance.send(name, *args, &block) if self.instance.respond_to?(name)
       super
+    end
+
+    def initialize
+      reset!
+    end
+
+    def reset!
+      @record_head = 0
     end
 
     def storyboard
@@ -17,6 +25,7 @@ module Storyboard
 
     def define_storyboard(&block)
       puts "Defining storyboard"
+      reset!
       Sketch.class_eval do
         define_method(:run_storyboard_initializer) do
           self.storyboard_settings = DisplaySettings.new
@@ -29,17 +38,26 @@ module Storyboard
       end
     end
 
-    def define_scene(name_or_number=nil, &block)
+    def define_scene(name=nil, &block)
+      current_scene = Scene.new(name, storyboard.scenes.length + 1) 
+      storyboard.scenes << current_scene
       block.call
     end
 
     def define_panel(&block)
-      storyboard.define_panel(&block)
+      unless current_scene
+        current_scene = Scene.new(nil, storyboard.scenes.length + 1)
+        storyboard.scenes << current_scene
+      end
+      panel = Panel.new(storyboard, current_scene, block,
+                        record_head, storyboard.scenes.length + 1)
+      current_scene.panels << panel
+      storyboard.panels << panel
+      @record_head += panel.duration
     end
 
-    # TODO record the actual duration
     def pause(duration)
-      define_panel do end
+      @record_head += duration
     end
   end
 end
@@ -48,8 +66,8 @@ def storyboard(&block)
   Storyboard::StoryboardBuilder.define_storyboard(&block)
 end
 
-def scene(name_or_number=nil, &block)
-  Storyboard::StoryboardBuilder.define_scene(name_or_number, &block)
+def scene(name=nil, &block)
+  Storyboard::StoryboardBuilder.define_scene(name, &block)
 end
 
 def panel(&block)
