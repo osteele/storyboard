@@ -1,3 +1,5 @@
+require 'singleton'
+
 module Storyboard
   class Storyboard
     include Singleton

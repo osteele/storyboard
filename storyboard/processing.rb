@@ -46,7 +46,7 @@ class Sketch < Processing::App
       FileUtils::rm_rf 'build/frames'
     end
 
-    self.define_storyboard
+    self.run_storyboard_initializer
     create_panel
 
     storyboard_settings.apply_global_settings(self)
