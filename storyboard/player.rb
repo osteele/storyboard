@@ -138,6 +138,8 @@ module Storyboard
     end
 
     def []=(key, object)
+      return if @object_map[key] == object
+      @objects.delete @object_map[key]
       @objects << object unless @objects.include?(object)
       @object_map[key.intern] = object
     end
@@ -152,9 +154,15 @@ module Storyboard
     end
 
     def remove!(key)
-      object = @object_map[key]
-      @object_map.delete key
-      @objects.delete object
+      if key.instance_of?(Symbol)
+        object = @object_map[key]
+        @object_map.delete key
+        @objects.delete object
+      else
+        # TODO remove the key
+        object = key
+        @objects.delete object
+      end
     end
 
     def method_missing(name, *args)
