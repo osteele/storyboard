@@ -1,3 +1,5 @@
+# Storyboard runner and back end for Ruby-Processing
+
 class Sketch < Processing::App
   attr_accessor :storyboard_settings
 
@@ -30,9 +32,8 @@ end
 #
 
 class Sketch < Processing::App
-  attr_accessor :make_movie
-  attr_accessor :running
-
+  def make_movie?; @make_movie; end
+  def running?; @running and not @broken; end
   def storyboard; Storyboard::Storyboard.instance; end
 
   def setup
@@ -41,13 +42,15 @@ class Sketch < Processing::App
     @broken = false
     @running = true
     @make_movie = ARGV.include?('--movie')
-    if @make_movie
+
+    if make_movie?
+      puts "Creating movie frames"
       require 'fileutils'
       FileUtils::rm_rf 'build/frames'
     end
 
     self.run_storyboard_initializer
-    create_panel
+    create_panel unless make_movie?
 
     storyboard_settings.apply_global_settings(self)
   end
@@ -59,15 +62,16 @@ class Sketch < Processing::App
   end
 
   def draw
-    self.rewind! if reload?
+    self.rewind! if reload_watched_requires :all => true, :verbose => true
     return if @broken
     begin
       with_matrix do
         storyboard_settings.apply_frame_settings(self)
-        storyboard.draw_current_frame(self, running)
+        storyboard.draw_current_frame(self)
+        storyboard.advance_frame if running?
       end
       storyboard.draw_caption(self)
-      save_frame("build/frames/frame-####.png") if running and make_movie and storyboard.time <= storyboard.duration
+      save_frame("build/frames/frame-####.png") if running? and make_movie? and storyboard.time <= storyboard.duration
     rescue Exception => e
       puts "Exception occurred while running animation:"
       puts e.to_s
@@ -75,14 +79,15 @@ class Sketch < Processing::App
       puts "Execution halted."
       @broken = true
     end
+    exit if make_movie? and storyboard.done?
   end
 
-  def pause!; self.running = false; end
+  def pause!; @running = false; end
 
   def run!
-    storyboard.time = 0 if storyboard.time > storyboard.duration
-    self.running = true
+    @running = true
     @broken = false
+    storyboard.rewind! if storyboard.done?
   end
 end
 

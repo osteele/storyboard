@@ -27,6 +27,10 @@ module Storyboard
       @panels.map &:reset
     end
 
+    def done?
+      self.time > self.duration
+    end
+
     def duration
       panels.any? ? panels.last.end_time : 0
     end
@@ -40,9 +44,8 @@ module Storyboard
 
     # call each of the panels up through the current time, with an
     # argument that indicates the proportion through that panel
-    def draw_current_frame(context, advance=true)
+    def draw_current_frame(context)
       time = self.time
-      @current_frame += 1 if advance
       for panel in @panels do
         break if time < 0
         panel.run(context, [time, panel.duration].min)
@@ -51,6 +54,10 @@ module Storyboard
       self.objects.each do |object|
         object.draw context
       end
+    end
+
+    def advance_frame
+      @current_frame += 1
     end
 
     def draw_caption(context)
