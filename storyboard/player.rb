@@ -21,6 +21,10 @@ module Storyboard
         scene_number = ARGV[ARGV.index('--scene') + 1].to_i
         scene = storyboard.scenes.find { |s| s.number == scene_number }
         panels = scene.panels
+        if ARGV.include?('--panel')
+          panel_number = ARGV[ARGV.index('--panel') + 1].to_i
+          panels = panels.select { |p| p.number >= panel_number }
+        end
       end
       @selected_panels = panels
     end
@@ -40,7 +44,7 @@ module Storyboard
     end
 
     def done?
-      self.time > self.duration
+      self.time >= self.end_time
     end
 
     def time; @current_frame / frame_rate; end
@@ -61,6 +65,7 @@ module Storyboard
 
     def advance_frame
       @current_frame += 1
+      @current_frame -= 1 if done?
     end
 
     private

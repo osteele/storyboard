@@ -72,7 +72,7 @@ class Sketch < Processing::App
       with_matrix do
         storyboard_settings.apply_frame_settings(self)
         player.draw_frame(self)
-        player.advance_frame if running?
+        player.advance_frame if running? and not player.done?
       end
       player.draw_frame_labels(self)
       save_frame("build/frames/frame-####.png") if make_movie? and running?
