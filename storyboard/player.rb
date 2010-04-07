@@ -83,14 +83,19 @@ module Storyboard
       return unless caption
       @@caption_font ||= context.create_font('Helvetica', 10)
       context.text_font @@caption_font
-      context.text(caption, 24, context.height - 10)
+      context.text_align context.instance_eval("CENTER")
+      height = context.text_descent + context.text_ascent
+      context.text(caption, 0, context.height - height - 2,
+                   context.width, height)
+      context.text_align context.instance_eval("LEFT")
     end
 
     def draw_frame_label(context)
       panel = current_panel
       @@frame_label_font ||= context.create_font('Helvetica', 8)
       context.text_font @@frame_label_font
-      context.text("#{panel ? panel.name : nil} frame #{@current_frame}", 2, 12)
+      context.text("#{panel ? panel.name : nil} frame #{@current_frame}",
+                   2, 2 + context.text_ascent + context.text_descent)
     end
   end
 
