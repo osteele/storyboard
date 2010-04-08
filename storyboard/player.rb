@@ -25,12 +25,14 @@ module Storyboard
           panel_number = ARGV[ARGV.index('--panel') + 1].to_i
           panels = panels.select { |p| p.number >= panel_number }
         end
+        puts "Restricted to panels #{panels.first.name}..#{panels.last.name}, " +
+          "#{panels.first.start_time} <= time < #{panels.last.end_time}"
       end
       @selected_panels = panels
     end
 
     def rewind!
-      @current_frame = self.start_time * frame_rate
+      @current_frame = (self.start_time * frame_rate).to_i
       stage_manager.clear!
       panels.map &:reset
     end
@@ -47,11 +49,11 @@ module Storyboard
       self.time >= self.end_time
     end
 
-    def time; @current_frame / frame_rate; end
+    def time; @current_frame.to_f / frame_rate; end
 
     def time=(t)
       self.rewind! if t < self.time
-      @current_frame = t * frame_rate
+      @current_frame = (t * frame_rate).to_i
     end
 
     def draw_frame(context)
@@ -74,9 +76,8 @@ module Storyboard
     def draw_current_frame(context)
       time = self.time
       for panel in panels do
-        break if time < 0
-        panel.run(context, self, [time, panel.duration].min) if panel
-        time -= panel.duration
+        break if time < panel.start_time
+        panel.run(context, self, [time - panel.start_time, panel.duration].min)
       end
       stage_manager.objects.each do |object|
         object.draw context
@@ -85,20 +86,15 @@ module Storyboard
 
     def current_panel
       time = self.time
-      for panel in panels do
-        return panel if time < 0
-        time -= panel.duration
-      end
-      return nil
+      return panels.first { |panel| panel.start_time < time and time < panel.end_time }
     end
 
     def current_caption
       time = self.time
       caption = nil
       for panel in panels do
-        break if time < 0
+        break if time < panel.start_time
         caption = panel.caption || caption
-        time -= panel.duration
       end
       return caption
     end

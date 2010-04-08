@@ -115,7 +115,7 @@ class Sketch < Processing::App
   def create_panel
     control_panel do |c|
       #c.slider :opacity
-      c.slider(:Time, 0..(storyboard.duration)) { |t| self.time = t; self.pause! }
+      c.slider(:Time, (player.start_time)..(player.end_time)) { |t| self.time = t; self.pause! }
       #c.menu(:options, ['one', 'two', 'three'], 'two') { }
       #c.checkbox(:paused) { |c| self.running = !c }
       c.button(:pause!)
