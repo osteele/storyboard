@@ -33,7 +33,7 @@ end
 #
 
 class Sketch < Processing::App
-  attr_reader :player
+  attr_reader :player, :movie_maker
   attr_accessor :running
 
   def make_movie?; @make_movie; end
@@ -47,18 +47,14 @@ class Sketch < Processing::App
     @running = true
     @player = Storyboard::Player.new(storyboard)
     @make_movie = ARGV.include?('--movie')
-
-    if make_movie?
-      puts "Creating movie frames"
-      require 'fileutils'
-      FileUtils::rm_rf '/tmp/storyboard/frames'
-    end
+    @movie_maker = Storyboard::MovieMaker.new(self, make_movie?)
 
     with_rescue do
       self.run_storyboard_initializer
-      storyboard_settings.apply_global_settings(self)
+      storyboard_settings.apply_setup_settings(self)
     end
 
+    movie_maker.start
     create_panel unless make_movie?
 
     self.run!
@@ -80,6 +76,7 @@ class Sketch < Processing::App
     begin
       player.draw_frame(self, storyboard_settings, !make_movie?)
       player.advance_frame if running? and not player.done?
+      movie_maker.add_frame if running?
       save_frame("/tmp/storyboard/frames/frame-####.png") if make_movie? and running?
     rescue Exception => e
       puts "Exception occurred while running animation:"
@@ -89,6 +86,7 @@ class Sketch < Processing::App
       @broken = true
       @exception = e
     end
+    movie_maker.done if player.done?
     exit if make_movie? and player.done?
   end
 
@@ -150,6 +148,60 @@ class Sketch < Processing::App
       c.button(:run!)
       c.button(:rewind!)
       self.running = true
+    end
+  end
+end
+
+
+#
+# Movie Maker
+#
+
+module Storyboard
+  class MovieMaker
+    def initialize(graphics, enabled)
+      @graphics = graphics
+      @enabled = enabled
+    end
+
+    def enabled?; @enabled; end
+
+    def start
+      return unless enabled?
+      puts "Creating movie frames"
+      require 'fileutils'
+      FileUtils::rm_rf '/tmp/storyboard/frames'
+    end
+
+    def done; end
+
+    def add_frame
+      return unless enabled?
+      @graphics.save_frame("/tmp/storyboard/frames/frame-####.png")
+    end
+  end
+end
+
+
+#
+# Apply Display Settings
+#
+
+module Storyboard
+  class DisplaySettings
+
+    def apply_setup_settings(sketch)
+      xsize, ysize = size || [300, 300]
+      xscale, yscale = scale || [1.0, 1.0]
+      sketch.size(xsize * xscale, ysize * yscale)
+    end
+
+    def apply_frame_settings(sketch)
+      sketch.color_mode *color_mode if color_mode
+      sketch.background *background if background
+      sketch.scale(*scale) if scale
+      sketch.smooth
+      sketch.stroke_weight 2
     end
   end
 end

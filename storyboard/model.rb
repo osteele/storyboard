@@ -191,19 +191,5 @@ module Storyboard
 
   class DisplaySettings
     attr_accessor :size, :scale, :color_mode, :background
-
-    def apply_global_settings(sketch)
-      xsize, ysize = size || [300, 300]
-      xscale, yscale = scale || [1.0, 1.0]
-      sketch.size(xsize * xscale, ysize * yscale)
-    end
-
-    def apply_frame_settings(sketch)
-      sketch.color_mode *color_mode if color_mode
-      sketch.background *background if background
-      sketch.scale(*scale) if scale
-      sketch.smooth
-      sketch.stroke_weight 2
-    end
   end
 end
