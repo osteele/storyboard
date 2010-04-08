@@ -43,7 +43,7 @@ class Sketch < Processing::App
   def setup
     puts "Starting at #{Time.now}"
 
-    self.reset!
+    self.reset_exception_state!
     @running = true
     @player = Storyboard::Player.new(storyboard)
     @make_movie = ARGV.include?('--movie')
@@ -54,29 +54,24 @@ class Sketch < Processing::App
       FileUtils::rm_rf '/tmp/storyboard/frames'
     end
 
-    self.run_storyboard_initializer
+    with_rescue do
+      self.run_storyboard_initializer
+      storyboard_settings.apply_global_settings(self)
+    end
+
     create_panel unless make_movie?
 
-    storyboard_settings.apply_global_settings(self)
     self.run!
   end
 
-  def reset!
-    @broken = false
-    @exception = nil
-  end
-
   def rewind!
-    self.reset!
+    self.reset_exception_state!
     player.rewind!
     puts "Execution resumed." if @broken
   end
 
   def draw
-    if reload_watched_requires :all => true, :verbose => true
-      self.setup if player.storyboard != storyboard
-      self.rewind!
-    end
+    reload_changes
     if @exception
       background 0
       player.draw_caption_text(self, "Exception: #{@exception.to_s} at #{@exception.backtrace.first.sub(/.*\//, '')}")
@@ -97,10 +92,37 @@ class Sketch < Processing::App
     exit if make_movie? and player.done?
   end
 
+  def reload_changes
+    reloaded = with_rescue do reload_watched_requires :all => true, :verbose => true end
+    if reloaded
+      self.setup if player.storyboard != storyboard
+      self.rewind!
+    end
+  end
+
+  def reset_exception_state!
+    @broken = false
+    @exception = nil
+  end
+
+  def with_rescue(&block)
+    self.reset_exception_state!
+    begin
+      return block.call
+    rescue Exception => e
+      puts "Exception occurred while running animation:"
+      puts e.to_s
+      puts e.backtrace.join("\n")
+      puts "Execution halted."
+      @broken = true
+      @exception = e
+    end
+  end
+
   def pause!; self.running = false; end
 
   def run!
-    self.reset!
+    self.reset_exception_state!
     @running = true
     player.rewind! if player.done?
   end
