@@ -1,26 +1,46 @@
-== Basic Features
-* write script transcript
-* display title, credits
-* more features from design overview
+== Features
+* callouts
+* write transcript to file
+* display title, credit frames
+* record movie from within application
+* voiceover track
+* time frames according to caption tts
+* insets
+* multiple figures
+* PDF output
+* compile to applet
 
-== Debugging Features
-* reload main script without error
-
-== Advanced Features
-* record to quicktime from within application
-* create voiceover
-* time according to caption
+== Development Features
+* generic runner, that takes storyboard file as argument
+* only try to reload files if they've changed since last try
+* command-line options to set size
+* CLI
 
 == DSL
+* new scene should clear stage
+* add Act container
 * reset_panels! should not be necessary
 * storyboard definition should be able to go in separate file
 
 == API
-* implement add, etc., for avars
-* implement DisplayObject
+* avars: arithmetic operations
+* avars: multiple stop points
+* color object
+* DisplayObject base class: transformations, callouts
+* morphing
 * scene graphs
-* layout
-* add helpers
+* layout managers
+* include helpers into panel context
+
+== Examples
+* pythagorean proofs
+* Legendre transformation
+* sum of squares, cubes
 
 == Code Organization
 * use option parser
+* cleaner method for shared panel context
+* initialize player with graphics context
+
+== Bugs
+* control panel
