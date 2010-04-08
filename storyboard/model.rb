@@ -163,32 +163,27 @@ module Storyboard
   end
 
   class ColorAvar
+    import "java.awt.Color"
     attr_accessor :s
 
     def initialize(start, stop)
       @start, @stop = start, stop
       @rgb_start = hsb2rgb(*start)
       @rgb_stop = hsb2rgb(*stop)
-      #p [@start, @rgb_start]
       @s = 0
     end
 
     def to_a
-      #@start.zip(@stop).map { |a, b| a + AVar.ease(s) * (b - a) }
       rgb = @rgb_start.zip(@rgb_stop).map { |a, b| a + AVar.ease(s) * (b - a) }
-      #rgb = [0.0, 0.0, 1.0]
       rgb2hsb(*rgb)
     end
 
     def rgb2hsb(r, g, b)
-      import "java.awt.Color"
-      # p [r,g,b]
-      r, g, b = [r, g, b].map { |c| (255 * c).to_i }
+      r,g,b = [r,g,b].map { |c| (255 * c).to_i }
       java.awt.Color.RGBtoHSB(r, g, b, nil).to_a
     end
 
     def hsb2rgb(h, s, b)
-      import "java.awt.Color"
       color = java.awt.Color.getHSBColor(h, s, b)
       return [:getRed, :getGreen, :getBlue].map { |m| color.send(m) / 255.0 }
     end
