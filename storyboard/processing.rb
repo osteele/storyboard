@@ -43,7 +43,7 @@ class Sketch < Processing::App
   def setup
     puts "Starting at #{Time.now}"
 
-    @broken = false
+    self.reset!
     @running = true
     @player = Storyboard::Player.new(storyboard)
     @make_movie = ARGV.include?('--movie')
@@ -61,10 +61,15 @@ class Sketch < Processing::App
     self.run!
   end
 
+  def reset!
+    @broken = false
+    @exception = nil
+  end
+
   def rewind!
+    self.reset!
     player.rewind!
     puts "Execution resumed." if @broken
-    @broken = false
   end
 
   def draw
@@ -72,14 +77,14 @@ class Sketch < Processing::App
       self.setup if player.storyboard != storyboard
       self.rewind!
     end
-    return if @broken
+    if @exception
+      background 0
+      player.draw_caption_text(self, "Exception: #{@exception.to_s} at #{@exception.backtrace.first.sub(/.*\//, '')}")
+      return
+    end
     begin
-      with_matrix do
-        storyboard_settings.apply_frame_settings(self)
-        player.draw_frame(self)
-        player.advance_frame if running? and not player.done?
-      end
-      player.draw_frame_labels(self, !make_movie?)
+      player.draw_frame(self, storyboard_settings, !make_movie?)
+      player.advance_frame if running? and not player.done?
       save_frame("/tmp/storyboard/frames/frame-####.png") if make_movie? and running?
     rescue Exception => e
       puts "Exception occurred while running animation:"
@@ -87,6 +92,7 @@ class Sketch < Processing::App
       puts e.backtrace.join("\n")
       puts "Execution halted."
       @broken = true
+      @exception = e
     end
     exit if make_movie? and player.done?
   end
@@ -94,7 +100,7 @@ class Sketch < Processing::App
   def pause!; self.running = false; end
 
   def run!
-    @broken = false
+    self.reset!
     @running = true
     player.rewind! if player.done?
   end

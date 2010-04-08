@@ -56,13 +56,17 @@ module Storyboard
       @current_frame = (t * frame_rate).to_i
     end
 
-    def draw_frame(context)
-      draw_current_frame(context)
+    def draw_frame(graphics, storyboard_settings, draw_frame_label)
+      graphics.with_matrix do
+        storyboard_settings.apply_frame_settings(graphics)
+        draw_current_frame(graphics)
+      end
+      draw_frame_labels(graphics, draw_frame_label)
     end
 
-    def draw_frame_labels(context, label)
-      draw_frame_label(context) if label
-      draw_caption(context)
+    def draw_frame_labels(graphics, draw_frame_label)
+      draw_frame_label(graphics) if draw_frame_label
+      draw_caption(graphics)
     end
 
     def advance_frame
@@ -73,14 +77,14 @@ module Storyboard
 
     # call each of the panels up through the current time, with an
     # argument that indicates the proportion through that panel
-    def draw_current_frame(context)
+    def draw_current_frame(graphics)
       time = self.time
       for panel in panels do
         break if time < panel.start_time
-        panel.run(context, self, [time - panel.start_time, panel.duration].min)
+        panel.run(graphics, self, [time - panel.start_time, panel.duration].min)
       end
       stage_manager.objects.each do |object|
-        object.draw context
+        object.draw graphics
       end
     end
 
@@ -99,24 +103,29 @@ module Storyboard
       return caption
     end
     
-    def draw_caption(context)
+    def draw_caption(graphics)
       caption = current_caption
-      return unless caption
-      @@caption_font ||= context.create_font('Helvetica', 10)
-      context.text_font @@caption_font
-      context.text_align context.instance_eval("CENTER")
-      height = context.text_descent + context.text_ascent
-      context.text(caption, 0, context.height - height - 2,
-                   context.width, height)
-      context.text_align context.instance_eval("LEFT")
+      draw_caption_text(graphics, caption) if caption
     end
 
-    def draw_frame_label(context)
+    public
+    def draw_caption_text(graphics, caption)
+      @@caption_font ||= graphics.create_font('Helvetica', 10)
+      graphics.text_font @@caption_font
+      graphics.text_align graphics.instance_eval("CENTER")
+      height = graphics.text_descent + graphics.text_ascent
+      graphics.text(caption, 0, graphics.height - height - 2,
+                   graphics.width, height)
+      graphics.text_align graphics.instance_eval("LEFT")
+    end
+
+    private
+    def draw_frame_label(graphics)
       panel = current_panel
-      @@frame_label_font ||= context.create_font('Helvetica', 8)
-      context.text_font @@frame_label_font
-      context.text("#{panel ? panel.name : nil} frame #{@current_frame}",
-                   2, 2 + context.text_ascent + context.text_descent)
+      @@frame_label_font ||= graphics.create_font('Helvetica', 8)
+      graphics.text_font @@frame_label_font
+      graphics.text("#{panel ? panel.name : nil} frame #{@current_frame}",
+                   2, 2 + graphics.text_ascent + graphics.text_descent)
     end
   end
 
