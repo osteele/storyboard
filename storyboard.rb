@@ -1,3 +1,4 @@
+require 'storyboard/avars.rb'
 require 'storyboard/dsl.rb'
 require 'storyboard/model.rb'
 require 'storyboard/player.rb'
