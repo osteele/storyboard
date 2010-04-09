@@ -190,18 +190,18 @@ end
 module Storyboard
   class DisplaySettings
 
-    def apply_setup_settings(sketch)
+    def apply_setup_settings(g)
       xsize, ysize = size || [300, 300]
       xscale, yscale = scale || [1.0, 1.0]
-      sketch.size(xsize * xscale, ysize * yscale)
+      g.size(xsize * xscale, ysize * yscale)
     end
 
-    def apply_frame_settings(sketch)
-      sketch.color_mode *color_mode if color_mode
-      sketch.background *background if background
-      sketch.scale(*scale) if scale
-      sketch.smooth
-      sketch.stroke_weight 2
+    def apply_frame_settings(g)
+      g.color_mode *color_mode if color_mode
+      g.background *(background || [0])
+      g.scale(*scale) if scale
+      g.smooth
+      g.stroke_weight 2
     end
   end
 end
