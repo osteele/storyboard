@@ -57,4 +57,8 @@ module Kernel
     end
     return reloads.any?
   end
+
+  def watched_require_mtime
+    (REQUIRE_LOAD_TIMES.map { |_, path, _| File.mtime(path) }.compact).max
+  end
 end

@@ -73,24 +73,17 @@ class Sketch < Processing::App
       player.draw_caption_text(self, "Exception: #{@exception.to_s} at #{@exception.backtrace.first.sub(/.*\//, '')}")
       return
     end
-    begin
+    with_rescue do
       player.draw_frame(self, storyboard_settings, !make_movie?)
       player.advance_frame if running? and not player.done?
       movie_maker.add_frame if running?
-      save_frame("/tmp/storyboard/frames/frame-####.png") if make_movie? and running?
-    rescue Exception => e
-      puts "Exception occurred while running animation:"
-      puts e.to_s
-      puts e.backtrace.join("\n")
-      puts "Execution halted."
-      @broken = true
-      @exception = e
     end
     movie_maker.done if player.done?
     exit if make_movie? and player.done?
   end
 
   def reload_changes
+    return if @exception and watched_require_mtime == @exception_time
     reloaded = with_rescue do reload_watched_requires :all => true, :verbose => true end
     if reloaded
       self.setup if player.storyboard != storyboard
@@ -114,6 +107,7 @@ class Sketch < Processing::App
       puts "Execution halted."
       @broken = true
       @exception = e
+      @exception_time = watched_require_mtime
     end
   end
 
