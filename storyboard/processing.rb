@@ -1,4 +1,5 @@
-# Storyboard runner and back end for Ruby-Processing
+# Storyboard adaptor and back end for Ruby-Processing
+require 'watch_require'
 
 # TODO move this to DSL
 class Sketch < Processing::App
@@ -29,7 +30,7 @@ end
 
 
 #
-# Runner
+# Adaptor
 #
 
 class Sketch < Processing::App
