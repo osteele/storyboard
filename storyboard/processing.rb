@@ -214,6 +214,10 @@ class Sketch < Processing::App
   load_library "control_panel"
 
   def create_panel
+    if @control_panel
+      @control_panel.hide
+      @control_panel = nil
+    end
     control_panel do |c|
       #c.slider :opacity
       c.slider(:Time, (player.start_time)..(player.end_time)) { |t| self.time = t; self.pause! }

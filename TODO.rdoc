@@ -44,6 +44,3 @@
 * rearrange directory structure
 * cleaner method for shared panel context
 * initialize player with graphics context
-
-== Bugs
-* reset control panel
