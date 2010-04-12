@@ -25,11 +25,17 @@ module Storyboard
         scene = storyboard.scenes.find { |s| s.number == scene_number }
         puts "Warning: no scene #{scene_number}" unless scene
         panels = scene ? scene.panels : []
-        if options.panel
-          panel_number = options.panel.to_i
-          panels = panels.select { |p| p.number >= panel_number }
-          puts "Warning: no panel #{panel_number}" unless panel
+        case options.panel
+        when /^(\d+)$/
+          panel_number = $1.to_i
+          panels = panels.select { |p| p.number == panel_number }
+        when /^(\d+)-$/
+          panel_number = $1.to_i
+          panels = panels.select { |p| p.number > panel_number }
+        else
+          puts "Warning: Unknown panel restriction syntax #{panel_number}"
         end
+        puts "Warning: no panel #{panel_number}" unless panel
         puts "Restricted to panels #{panels.first.name}..#{panels.last.name}, " +
           "#{panels.first.start_time} <= time < #{panels.last.end_time}" if
           panels.any? and options.verbose
