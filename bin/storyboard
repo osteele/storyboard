@@ -1,0 +1,18 @@
+#!/usr/bin/env ruby
+
+require 'rubygems'
+require 'ruby-processing'
+
+module Processing
+  class StoryboardRunner < Runner
+
+    private
+
+    def spin_up(starter_script, sketch, args)
+      loader = File.join(File.dirname(__FILE__), '../processing_loader.rb')
+      super(starter_script, loader, [@options.path] + args)
+    end
+  end
+end
+
+Processing::StoryboardRunner.execute
