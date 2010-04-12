@@ -43,7 +43,7 @@ class Sketch < Processing::App
   def setup
     puts "Starting at #{Time.now}"
 
-    self.reset_exception_state!
+    reset_exception_state!
     @running = true
     @player = Storyboard::Player.new(storyboard)
     @make_movie = ARGV.include?('--movie')
@@ -61,16 +61,16 @@ class Sketch < Processing::App
   end
 
   def rewind!
-    self.reset_exception_state!
+    reset_exception_state!
     player.rewind!
     puts "Execution resumed." if @broken
   end
 
   def draw
     reload_changes
-    if @exception
+    if exception_occurred?
       background 0
-      player.draw_caption_text(self, "Exception: #{@exception.to_s} at #{@exception.backtrace.first.sub(/.*\//, '')}")
+      player.draw_caption_text(self, "Exception: #{exception_text}")
       return
     end
     with_rescue do
@@ -83,12 +83,41 @@ class Sketch < Processing::App
   end
 
   def reload_changes
-    return if @exception and watched_require_mtime == @exception_time
+    return if exception_occurred? and watched_require_mtime == exception_time
     reloaded = with_rescue do reload_watched_requires :all => true, :verbose => true end
     if reloaded
       self.setup if player.storyboard != storyboard
       self.rewind!
     end
+  end
+
+  def pause!; self.running = false; end
+
+  def run!
+    reset_exception_state!
+    @running = true
+    player.rewind! if player.done?
+  end
+
+  def time=(time)
+    player.time = time
+  end
+end
+
+
+#
+# Exception Handling
+#
+
+class Sketch < Processing::App
+  private
+
+  attr_reader :exception_time
+
+  def exception_occurred?; @exception; end
+
+  def exception_text
+    "#{@exception.to_s} at #{@exception.backtrace.first.sub(/.*\//, '')}"
   end
 
   def reset_exception_state!
@@ -97,7 +126,7 @@ class Sketch < Processing::App
   end
 
   def with_rescue(&block)
-    self.reset_exception_state!
+    reset_exception_state!
     begin
       return block.call
     rescue Exception => e
@@ -109,18 +138,6 @@ class Sketch < Processing::App
       @exception = e
       @exception_time = watched_require_mtime
     end
-  end
-
-  def pause!; self.running = false; end
-
-  def run!
-    self.reset_exception_state!
-    @running = true
-    player.rewind! if player.done?
-  end
-
-  def time=(time)
-    player.time = time
   end
 end
 
