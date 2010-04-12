@@ -1,3 +1,5 @@
+require 'set'
+
 module Storyboard
   class Player
     attr_reader :storyboard, :stage_manager, :frame_rate, :options
@@ -37,8 +39,8 @@ module Storyboard
 
     def rewind!
       @current_frame = (self.start_time * frame_rate).to_i
+      @setup_panels = Set.new
       stage_manager.clear!
-      panels.map &:reset
     end
 
     def start_time
@@ -92,11 +94,12 @@ module Storyboard
     end
 
     def ensure_setup_panel(panel, graphics)
-      run = panel.setup(self, graphics)
+      return if @setup_panels.include?(panel)
+      @setup_panels << panel
+      panel.setup(self, graphics)
       # Display this after invoking the block, since the blocks sets
       # the caption
-      puts "#{panel.name}" + (panel.caption ? ": #{panel.caption}" : '') if
-        run and options.verbose
+      puts "#{panel.name}" + (panel.caption ? ": #{panel.caption}" : '') if options.verbose
     end
 
     def each_active_panel

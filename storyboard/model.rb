@@ -30,7 +30,6 @@ module Storyboard
       @block = block
       @start_time = start_time
       @duration = 1
-      @called = false
       @avars = []
     end
 
@@ -41,20 +40,13 @@ module Storyboard
     end
 
     def setup(runner, graphics)
-      return if @called
-      @called = true
       create_context(runner, graphics).instance_eval &@block
-      true
     end
 
     def frame(time)
       s = [time - start_time, duration].min
       s = s.to_f / duration
       avars.each do |avar| avar.s = s end
-    end
-
-    def reset
-      @called = false
     end
 
     def create_context(runner, sketch)

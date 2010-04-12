@@ -43,7 +43,6 @@
 * rearrange directory structure
 * cleaner method for shared panel context
 * initialize player with graphics context
-* track panel initialization in player, not panel
 
 == Bugs
 * reset control panel
