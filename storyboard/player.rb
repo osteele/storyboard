@@ -1,9 +1,10 @@
 module Storyboard
   class Player
-    attr_reader :storyboard, :stage_manager, :frame_rate
+    attr_reader :storyboard, :stage_manager, :frame_rate, :options
 
-    def initialize(storyboard)
+    def initialize(storyboard, options)
       @storyboard = storyboard
+      @options = options
       @stage_manager = StageManager.new
       @selected_panels = nil
       @frame_rate = 60.0
@@ -17,13 +18,13 @@ module Storyboard
     def selected_panels
       return @selected_panels if @selected_panels
       panels = self.panels
-      if ARGV.include?('--scene')
-        scene_number = ARGV[ARGV.index('--scene') + 1].to_i
+      if options.scene
+        scene_number = options.scene.to_i
         scene = storyboard.scenes.find { |s| s.number == scene_number }
         puts "Warning: no scene #{scene_number}" unless scene
         panels = scene ? scene.panels : []
-        if ARGV.include?('--panel')
-          panel_number = ARGV[ARGV.index('--panel') + 1].to_i
+        if options.panel
+          panel_number = options.panel.to_i
           panels = panels.select { |p| p.number >= panel_number }
           puts "Warning: no panel #{panel_number}" unless panel
         end

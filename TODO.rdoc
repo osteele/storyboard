@@ -11,8 +11,8 @@
 * compile to applet
 
 == Development Features
-* generic runner, that takes storyboard file as argument
-* only try to reload files if they've changed since last try
+* only catch errors in watch mode, and maybe not the first time
+* specify scene as regexp, not integer
 * command-line options to set size
 * CLI
 
@@ -21,6 +21,7 @@
 * add Act container
 * reset_panels! should not be necessary
 * storyboard definition should be able to go in separate file
+* don't expose Sketch
 
 == API
 * avars: arithmetic operations
@@ -38,9 +39,11 @@
 * sum of squares, cubes
 
 == Code Organization
-* use option parser
+* move loader to a separate file / class
+* rearrange directory structure
 * cleaner method for shared panel context
 * initialize player with graphics context
+* track panel initialization in player, not panel
 
 == Bugs
-* control panel
+* reset control panel

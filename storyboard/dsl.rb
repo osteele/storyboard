@@ -29,10 +29,6 @@ module Storyboard
       Sketch.class_eval do
         define_method(:run_storyboard_initializer) do
           self.storyboard_settings = DisplaySettings.new
-          if ARGV.include?('--scale')
-            s = ARGV[ARGV.index('--scale') + 1].to_f
-            self.storyboard_settings.scale = s, s
-          end
           storyboard_builder.instance_eval(&block)
         end
       end

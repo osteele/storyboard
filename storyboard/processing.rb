@@ -34,24 +34,55 @@ end
 #
 
 class Sketch < Processing::App
-  attr_reader :player, :movie_maker
+  attr_reader :player, :movie_maker, :options
   attr_accessor :running
 
-  def make_movie?; @make_movie; end
+  def make_movie?; options.movie; end
   def running?; @running and not @broken; end
   def storyboard; Storyboard::Storyboard.instance; end
 
+  def parse_options
+    require 'optparse'
+    require 'ostruct'
+    @options = OpenStruct.new
+    parser = OptionParser.new do |opts|
+      opts.on('--scene NUMBER') do |opt| options.scene = opt end
+      opts.on('--panel NUMBER') do |opt| options.panel = opt end
+      opts.on('--scale SCALE', Float) do |opt| options.scale = opt end
+      opts.on('--movie') do |opt| options.movie = true end
+    end
+    begin
+      parser.parse!(ARGV)
+    rescue OptionParser::ParseError => e
+      puts e
+    end
+  end
+
+  def initialize_storyboard
+    @initialized_storyboard = true
+    parse_options
+  end
+
+  def apply_option_overrides
+    if options.scale
+      s = options.scale
+      storyboard_settings.scale = [s, s]
+    end
+  end
+
   def setup
+    initialize_storyboard unless @initialized_storyboard
+
     puts "Starting at #{Time.now}"
 
     reset_exception_state!
     @running = true
-    @player = Storyboard::Player.new(storyboard)
-    @make_movie = ARGV.include?('--movie')
+    @player = Storyboard::Player.new(storyboard, options)
     @movie_maker = Storyboard::MovieMaker.new(self, make_movie?)
 
     with_rescue do
       self.run_storyboard_initializer
+      apply_option_overrides
       storyboard_settings.apply_setup_settings(self)
     end
 
