@@ -1,4 +1,4 @@
-# Storyboard adaptor and back end for Ruby-Processing
+# Storyboard adaptor, back-end, for Ruby-Processing
 require 'watch_require'
 
 # TODO move this to DSL
@@ -50,6 +50,7 @@ class Sketch < Processing::App
       opts.on('--scene NUMBER') do |opt| options.scene = opt end
       opts.on('--panel NUMBER') do |opt| options.panel = opt end
       opts.on('--scale SCALE', Float) do |opt| options.scale = opt end
+      opts.on('--size GEOMETRY') do |opt| options.size = opt end
       opts.on('--movie') do |opt| options.movie = true end
       opts.on('--verbose') do |opt| options.verbose = true end
     end
@@ -70,6 +71,25 @@ class Sketch < Processing::App
     if options.scale
       s = options.scale
       storyboard_settings.scale = [s, s]
+    end
+    if options.size
+      x, y = storyboard_settings.size.map(&:to_f)
+      ratio = x / y
+      case options.size
+      when /^\d+$/
+        x = y = options.size.to_f
+      when /^(\d+)x(\d+)$/
+        x = y = $1.to_f, $2.to_f
+      when /^(\d+)x$/
+        x = $1.to_f
+        y = x / ratio
+      when /^x(\d+)$/
+        y = $1.to_f
+        x = y * ratio
+      else
+        puts "Invalid format for --size: #{options.size}"
+      end
+        storyboard_settings.size = [x, y]
     end
   end
 
@@ -138,6 +158,14 @@ class Sketch < Processing::App
   def time=(time)
     player.time = time
   end
+
+  # def stroke_weight(w)
+  #   if storyboard_settings.scale
+  #     sx = storyboard_settings.scale[0]
+  #     w = w.to_f / sx if sx < 1
+  #   end
+  #   super(w)
+  # end
 end
 
 

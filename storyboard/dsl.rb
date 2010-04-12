@@ -4,8 +4,11 @@ module Storyboard
   class StoryboardBuilder
     include Singleton
 
-    attr_reader :storyboard, :current_scene, :record_head, :verbose?
+    attr_accessor :graphics
+    attr_reader :record_head, :verbose?
 
+    # proxy the class to the singleton, so we can write
+    # StoryboardBuilder for StoryboardBuilder.instance
     def self.method_missing(name, *args, &block)
       return self.instance.send(name, *args, &block) if self.instance.respond_to?(name)
       super
@@ -17,6 +20,7 @@ module Storyboard
 
     def reset!
       @record_head = 0
+      # this doesn't reset the list of panels, as ::reset_panels! does
     end
 
     def storyboard
@@ -34,6 +38,14 @@ module Storyboard
       end
     end
 
+    def current_scene
+      unless @current_scene
+        @current_scene = Scene.new(nil, storyboard.scenes.length + 1)
+        storyboard.scenes << current_scene
+      end
+      @current_scene
+    end
+
     def define_scene(name=nil, &block)
       @current_scene = Scene.new(name, storyboard.scenes.length + 1)
       storyboard.scenes << @current_scene
@@ -42,10 +54,6 @@ module Storyboard
     end
 
     def define_panel(&block)
-      unless current_scene
-        @current_scene = Scene.new(nil, storyboard.scenes.length + 1)
-        storyboard.scenes << current_scene
-      end
       panel = Panel.new(storyboard, current_scene, block,
                         record_head, current_scene.panels.length + 1)
       current_scene.panels << panel
