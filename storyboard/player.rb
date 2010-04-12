@@ -20,13 +20,15 @@ module Storyboard
       if ARGV.include?('--scene')
         scene_number = ARGV[ARGV.index('--scene') + 1].to_i
         scene = storyboard.scenes.find { |s| s.number == scene_number }
-        panels = scene.panels
+        puts "Warning: no scene #{scene_number}" unless scene
+        panels = scene ? scene.panels : []
         if ARGV.include?('--panel')
           panel_number = ARGV[ARGV.index('--panel') + 1].to_i
           panels = panels.select { |p| p.number >= panel_number }
+          puts "Warning: no panel #{panel_number}" unless panel
         end
         puts "Restricted to panels #{panels.first.name}..#{panels.last.name}, " +
-          "#{panels.first.start_time} <= time < #{panels.last.end_time}"
+          "#{panels.first.start_time} <= time < #{panels.last.end_time}" if panels.any?
       end
       @selected_panels = panels
     end
