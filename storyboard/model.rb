@@ -40,19 +40,16 @@ module Storyboard
       "Scene #{@scene.number} panel #{@number}"
     end
 
-    def run(sketch, runner, time)
-      unless @called
-        @called = true
-        create_context(sketch, runner).instance_eval &@block
-        # Display this after invoking the block, since the blocks sets
-        # the caption
-        puts "#{self.name}" + (self.caption ? ": #{self.caption}" : '')
-      end
-      update_avars(time)
+    def setup(runner, graphics)
+      return if @called
+      @called = true
+      create_context(runner, graphics).instance_eval &@block
+      true
     end
 
-    def update_avars(time)
-      s = time.to_f / duration
+    def frame(time)
+      s = [time - start_time, duration].min
+      s = s.to_f / duration
       avars.each do |avar| avar.s = s end
     end
 
@@ -60,7 +57,7 @@ module Storyboard
       @called = false
     end
 
-    def create_context(sketch, runner)
+    def create_context(runner, sketch)
       scene.class.class_eval do
         attr_accessor :build_panel, :stage, :g
       end

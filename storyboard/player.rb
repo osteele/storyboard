@@ -29,7 +29,8 @@ module Storyboard
           puts "Warning: no panel #{panel_number}" unless panel
         end
         puts "Restricted to panels #{panels.first.name}..#{panels.last.name}, " +
-          "#{panels.first.start_time} <= time < #{panels.last.end_time}" if panels.any?
+          "#{panels.first.start_time} <= time < #{panels.last.end_time}" if
+          panels.any? and options.verbose
       end
       @selected_panels = panels
     end
@@ -81,13 +82,28 @@ module Storyboard
     # call each of the panels up through the current time, with an
     # argument that indicates the proportion through that panel
     def draw_current_frame(graphics)
-      time = self.time
-      for panel in panels do
-        break if time < panel.start_time
-        panel.run(graphics, self, [time - panel.start_time, panel.duration].min)
+      each_active_panel do |panel|
+        ensure_setup_panel(panel, graphics)
+        panel.frame(time)
       end
       stage_manager.objects.each do |object|
         object.draw graphics
+      end
+    end
+
+    def ensure_setup_panel(panel, graphics)
+      run = panel.setup(self, graphics)
+      # Display this after invoking the block, since the blocks sets
+      # the caption
+      puts "#{panel.name}" + (panel.caption ? ": #{panel.caption}" : '') if
+        run and options.verbose
+    end
+
+    def each_active_panel
+      time = self.time
+      for panel in panels do
+        break if time < panel.start_time
+        yield panel
       end
     end
 
@@ -97,10 +113,8 @@ module Storyboard
     end
 
     def current_caption
-      time = self.time
       caption = nil
-      for panel in panels do
-        break if time < panel.start_time
+      each_active_panel do |panel|
         caption = panel.caption || caption
       end
       return caption

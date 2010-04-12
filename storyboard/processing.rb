@@ -38,6 +38,7 @@ class Sketch < Processing::App
   attr_accessor :running
 
   def make_movie?; options.movie; end
+  def verbose?; options.verbose; end
   def running?; @running and not @broken; end
   def storyboard; Storyboard::Storyboard.instance; end
 
@@ -50,11 +51,13 @@ class Sketch < Processing::App
       opts.on('--panel NUMBER') do |opt| options.panel = opt end
       opts.on('--scale SCALE', Float) do |opt| options.scale = opt end
       opts.on('--movie') do |opt| options.movie = true end
+      opts.on('--verbose') do |opt| options.verbose = true end
     end
     begin
       parser.parse!(ARGV)
     rescue OptionParser::ParseError => e
       puts e
+      exit 1
     end
   end
 
@@ -73,7 +76,7 @@ class Sketch < Processing::App
   def setup
     initialize_storyboard unless @initialized_storyboard
 
-    puts "Starting at #{Time.now}"
+    puts "Starting at #{Time.now}" if verbose?
 
     reset_exception_state!
     @running = true
@@ -93,9 +96,9 @@ class Sketch < Processing::App
   end
 
   def rewind!
+    puts "Execution resumed." if exception_occurred?
     reset_exception_state!
     player.rewind!
-    puts "Execution resumed." if @broken
   end
 
   def draw
@@ -106,7 +109,8 @@ class Sketch < Processing::App
       return
     end
     with_rescue do
-      player.draw_frame(self, storyboard_settings, !make_movie?)
+      draw_frame_label = !make_movie?
+      player.draw_frame(self, storyboard_settings, draw_frame_label)
       player.advance_frame if running? and not player.done?
       movie_maker.add_frame if running?
     end
