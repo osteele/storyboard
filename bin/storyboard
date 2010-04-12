@@ -6,6 +6,11 @@ require 'ruby-processing'
 module Processing
   class StoryboardRunner < Runner
 
+    def parse_options(args)
+      args.unshift 'watch' unless %w[run watch live create app applet unpack -v -h].include?(args[0])
+      super
+    end
+
     private
 
     def spin_up(starter_script, sketch, args)
