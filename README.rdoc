@@ -1,13 +1,13 @@
 = Storyboard
 
-*Storyboard* is an animation language, for creating mathematical and
-pedagogical narratives -- movies that display a sequence of display
+*Storyboard* is an animation language, for creating mathematical
+explanatory narratives -- movies that display a sequence of display
 objects, intended to illustrate or explicate different aspects of an
 underlying model or idea, in an order that the author designs when she
 creates the animation.
 
-The emphasis of Storyboard is on pedagogical animations, mostly in two
-dimensions.  (Storyboard is intended to work with a variety of
+The emphasis of Storyboard is on explanatory visualizations, mostly in
+two dimensions.  (Storyboard is intended to work with a variety of
 back-end rendering systems, but Storyboard itself makes no specific
 contribution to 3-dimensional rendering or animation.)  Storyboard is
 not intended as a framework for the well-served aspect of character
@@ -181,4 +181,12 @@ subsequent panels within the same scene, until a panel calls the
 argument or arguments from the stage.  +clear_stage+ removes all
 display objects from the stage.
 
-Scenes, and storyboard metadata, are not yet implemented.
+== Status
+
+So far, I'm developing this solely to support a personal project
+(visualizing the geometry of the Discrete Fourier Transform).  There
+aren't enough examples, and it isn't yet baked.
+
+Storyboard metadata is not implemented.  Movie creation is not
+integrated into the framework.  See the TODO file for a longer list of
+known ommissions.
