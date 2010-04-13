@@ -31,6 +31,7 @@ module Storyboard
       @start_time = start_time
       @duration = 1
       @avars = []
+      raise "no block" unless block
     end
 
     def end_time; start_time + duration; end
@@ -90,7 +91,12 @@ module Storyboard
       animate_to(target, getter, start.to_f + delta.to_f)
     end
 
-    def animate_to(target, getter, stop)
+    def animate_to(target, getter, stop=nil)
+      if getter.instance_of?(Hash)
+        return getter.each do |key, value|
+          animate_to(target, key, value)
+        end
+      end
       start = target.send(getter).to_f
       setter = :"#{getter}="
       avar(start, stop) do |v| target.send(setter, v) end

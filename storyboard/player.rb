@@ -26,6 +26,7 @@ module Storyboard
         puts "Warning: no scene #{scene_number}" unless scene
         panels = scene ? scene.panels : []
         case options.panel
+        when nil
         when /^(\d+)$/
           panel_number = $1.to_i
           panels = panels.select { |p| p.number == panel_number }
@@ -35,7 +36,7 @@ module Storyboard
         else
           puts "Warning: Unknown panel restriction syntax #{panel_number}"
         end
-        puts "Warning: no panel #{panel_number}" unless panel
+        puts "Warning: no panel #{options.panel}" unless panels.any?
         puts "Restricted to panels #{panels.first.name}..#{panels.last.name}, " +
           "#{panels.first.start_time} <= time < #{panels.last.end_time}" if
           panels.any? and options.verbose
