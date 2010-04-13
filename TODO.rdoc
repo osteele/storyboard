@@ -13,14 +13,12 @@
 == Development Features
 * only catch errors in watch mode, and maybe not the first time
 * specify scene as regexp, not integer
-* command-line options to set size
 * CLI
 
 == DSL
 * new scene should clear stage
 * add Act container
 * reset_panels! should not be necessary
-* storyboard definition should be able to go in separate file
 * don't expose Sketch
 * line, etc., should record into scene graph
 

@@ -61,4 +61,8 @@ module Kernel
   def watched_require_mtime
     (REQUIRE_LOAD_TIMES.map { |_, path, _| File.mtime(path) }.compact).max
   end
+
+  def watched_files
+    REQUIRE_LOAD_TIMES.map { |_, path, _| path }
+  end
 end

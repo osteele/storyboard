@@ -1,5 +1,4 @@
 # Storyboard adaptor, back-end, for Ruby-Processing
-require 'watch_require'
 
 # TODO move this to DSL
 class Sketch < Processing::App
@@ -34,12 +33,12 @@ end
 #
 
 class Sketch < Processing::App
-  attr_reader :player, :movie_maker, :options
+  attr_reader :player, :movie_maker, :options, :file_watcher
   attr_accessor :running
 
   def make_movie?; options.movie; end
   def verbose?; options.verbose; end
-  def running?; @running and not @broken; end
+  def running?; @running and not exception_occurred?; end
   def storyboard; Storyboard::Storyboard.instance; end
 
   def parse_options
@@ -64,6 +63,7 @@ class Sketch < Processing::App
 
   def initialize_storyboard
     @initialized_storyboard = true
+    @file_watcher = FileWatcher.new
     parse_options
   end
 
@@ -122,7 +122,13 @@ class Sketch < Processing::App
   end
 
   def draw
-    reload_changes
+    with_rescue do
+      if file_watcher.reload_changes
+        reset_exception_state!
+        self.setup if player.storyboard != storyboard
+        self.rewind!
+      end
+    end
     if exception_occurred?
       background 0
       player.draw_caption_text(self, "Exception: #{exception_text}")
@@ -136,15 +142,6 @@ class Sketch < Processing::App
     end
     movie_maker.done if player.done?
     exit if make_movie? and player.done?
-  end
-
-  def reload_changes
-    return if exception_occurred? and watched_require_mtime == exception_time
-    reloaded = with_rescue do reload_watched_requires :all => true, :verbose => true end
-    if reloaded
-      self.setup if player.storyboard != storyboard
-      self.rewind!
-    end
   end
 
   def pause!; self.running = false; end
@@ -176,8 +173,6 @@ end
 class Sketch < Processing::App
   private
 
-  attr_reader :exception_time
-
   def exception_occurred?; @exception; end
 
   def exception_text
@@ -185,22 +180,18 @@ class Sketch < Processing::App
   end
 
   def reset_exception_state!
-    @broken = false
     @exception = nil
   end
 
   def with_rescue(&block)
-    reset_exception_state!
     begin
       return block.call
     rescue Exception => e
+      @exception = e
       puts "Exception occurred while running animation:"
       puts e.to_s
       puts e.backtrace.join("\n")
       puts "Execution halted."
-      @broken = true
-      @exception = e
-      @exception_time = watched_require_mtime
     end
   end
 end
