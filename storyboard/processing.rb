@@ -50,6 +50,7 @@ class Sketch < Processing::App
       opts.on('--panel NUMBER') do |opt| options.panel = opt end
       opts.on('--scale SCALE', Float) do |opt| options.scale = opt end
       opts.on('--size GEOMETRY') do |opt| options.size = opt end
+      opts.on('--gallery') do |opt| options.mode = :gallery end
       opts.on('--movie') do |opt| options.movie = true end
       opts.on('--verbose') do |opt| options.verbose = true end
     end
@@ -101,6 +102,7 @@ class Sketch < Processing::App
     reset_exception_state!
     @running = true
     @player = Storyboard::Player.new(storyboard, options)
+    @player = Storyboard::GalleryPlayer.new(storyboard, options) if options.mode == :gallery
     @movie_maker = Storyboard::MovieMaker.new(self, make_movie?)
 
     with_rescue do
@@ -135,8 +137,7 @@ class Sketch < Processing::App
       return
     end
     with_rescue do
-      draw_frame_label = !make_movie?
-      player.draw_frame(self, storyboard_settings, draw_frame_label)
+      player.draw_frame(self, storyboard_settings, :draw_frame_label => !make_movie?)
       player.advance_frame if running? and not player.done?
       movie_maker.add_frame if running?
     end
@@ -268,8 +269,15 @@ module Storyboard
 
     def apply_frame_settings(g)
       g.color_mode *color_mode if color_mode
-      g.background *(background || [0])
       g.scale(*scale) if scale
+      if true
+        g.background *(background || [0])
+      else
+        g.fill *(background || [0])
+        g.no_stroke
+        g.rect 0, 0, g.width, g.height
+        g.fill 1,0,1
+      end
       g.smooth
       g.stroke_weight 2
     end

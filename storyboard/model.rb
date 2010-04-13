@@ -51,19 +51,20 @@ module Storyboard
     end
 
     def create_context(runner, sketch)
-      scene.class.class_eval do
+      context = runner.context_for(scene)
+      context.class.class_eval do
         attr_accessor :build_panel, :stage, :g
       end
-      scene.instance_eval do
+      context.instance_eval do
         def caption(*args); @build_panel.caption(*args); end
         def avar(*args); @build_panel.avar(*args); end
         def animate_by(*args); @build_panel.animate_by(*args); end
         def animate_to(*args); @build_panel.animate_to(*args); end
       end
-      scene.build_panel = self
-      scene.stage = runner.stage_manager
-      scene.g = sketch
-      scene
+      context.build_panel = self
+      context.stage = runner.stage_manager
+      context.g = sketch
+      context
     end
 
     #

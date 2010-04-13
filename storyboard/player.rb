@@ -18,6 +18,7 @@ module Storyboard
     end
 
     def selected_panels
+      return options.panels if options.panels
       return @selected_panels if @selected_panels
       panels = self.panels
       if options.scene
@@ -33,6 +34,9 @@ module Storyboard
         when /^(\d+)-$/
           panel_number = $1.to_i
           panels = panels.select { |p| p.number > panel_number }
+        when /^(\d+)-(\d+)$/
+          panel_start_number, panel_stop_number = $1.to_i, $2.to_i
+          panels = panels.select { |p| panel_start_number <= p.number && p.number <= panel_stop_number }
         else
           puts "Warning: Unknown panel restriction syntax #{panel_number}"
         end
@@ -47,6 +51,7 @@ module Storyboard
     def rewind!
       @current_frame = (self.start_time * frame_rate).to_i
       @setup_panels = Set.new
+      @contexts = nil
       stage_manager.clear!
     end
 
@@ -57,6 +62,8 @@ module Storyboard
     def end_time
       selected_panels.any? ? selected_panels.last.end_time : 0
     end
+
+    def duration; end_time - start_time; end
 
     def done?
       self.time >= self.end_time
@@ -69,21 +76,22 @@ module Storyboard
       @current_frame = (t * frame_rate).to_i
     end
 
-    def draw_frame(graphics, storyboard_settings, draw_frame_label)
+    def draw_frame(graphics, storyboard_settings, options)
       graphics.with_matrix do
         storyboard_settings.apply_frame_settings(graphics)
         draw_current_frame(graphics)
       end
-      draw_frame_labels(graphics, draw_frame_label)
-    end
-
-    def draw_frame_labels(graphics, draw_frame_label)
-      draw_frame_label(graphics) if draw_frame_label
+      draw_frame_label(graphics) if options[:draw_frame_label]
       draw_caption(graphics)
     end
 
     def advance_frame
       @current_frame += 1
+    end
+
+    def context_for(scene)
+      @contexts ||= {}
+      @contexts[scene] ||= Object.new
     end
 
     private
@@ -142,17 +150,58 @@ module Storyboard
       graphics.text_align graphics.instance_eval("CENTER")
       height = graphics.text_descent + graphics.text_ascent
       graphics.text(caption, 0, graphics.height - height - 2,
-                   graphics.width, height)
+                    graphics.width, height)
       graphics.text_align graphics.instance_eval("LEFT")
     end
 
     private
+
     def draw_frame_label(graphics)
       panel = current_panel
       @@frame_label_font ||= graphics.create_font('Helvetica', 8)
       graphics.text_font @@frame_label_font
       graphics.text("#{panel ? panel.name : nil} frame #{@current_frame}",
-                   2, 2 + graphics.text_ascent + graphics.text_descent)
+                    2, 2 + graphics.text_ascent + graphics.text_descent)
+    end
+  end
+
+  class GalleryPlayer < Player
+    def initialize(storyboard, options)
+      super
+      @players = selected_panels.map do |panel|
+        opts = options.clone
+        opts.panels = [panel]
+        Player.new(storyboard, opts)
+      end
+      @first_time = true
+    end
+
+    def start_time; 0; end
+
+    def end_time
+      @players.map(&:duration).max
+    end
+
+    def draw_frame(graphics, storyboard_settings, options)
+      return unless @first_time
+      @first_time = false
+      sides = Math::sqrt(@players.length).ceil
+      scale = 1.0 / sides
+      dx = dy = 0
+      @players.each_with_index do |player, i|
+        puts "Drawing #{i}"
+        player.time = [time + player.start_time, player.end_time - 1.0/frame_rate].min
+        graphics.with_matrix do
+          graphics.translate dx, dy
+          graphics.scale scale, scale
+          player.draw_frame(graphics, storyboard_settings, options) if i <= 20
+        end
+        dx += graphics.width / sides
+        if (i+1) % sides == 0
+          dx = 0
+          dy += graphics.height / sides
+        end
+      end
     end
   end
 
