@@ -60,6 +60,7 @@ module Storyboard
         def avar(*args); @build_panel.avar(*args); end
         def animate_by(*args); @build_panel.animate_by(*args); end
         def animate_to(*args); @build_panel.animate_to(*args); end
+        def stage(object=nil); @stage << object if object; return @stage; end
       end
       context.build_panel = self
       context.stage = runner.stage_manager
