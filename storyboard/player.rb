@@ -103,8 +103,18 @@ module Storyboard
         ensure_setup_panel(panel, graphics)
         panel.frame(time)
       end
-      stage_manager.objects.each do |object|
-        object.draw graphics
+      layout = Layout.new(stage_manager.objects)
+      layout.apply
+      graphics.with_matrix do
+        layout.setup_matrix(graphics)
+        stage_manager.objects.each do |object|
+          if object.respond_to?(:draw_to)
+            object.draw_to graphics
+          else
+            # legacy
+            object.draw graphics
+          end
+        end
       end
     end
 
