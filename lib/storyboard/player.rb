@@ -99,14 +99,15 @@ module Storyboard
     # call each of the panels up through the current time, with an
     # argument that indicates the proportion through that panel
     def draw_current_frame(graphics)
+      apply_layout = false
       each_active_panel do |panel|
         ensure_setup_panel(panel, graphics)
         panel.frame(time)
       end
       layout = Layout.new(stage_manager.objects)
-      layout.apply
+      layout.apply if apply_layout
       graphics.with_matrix do
-        layout.setup_matrix(graphics)
+        layout.setup_matrix(graphics) if apply_layout
         stage_manager.objects.each do |object|
           if object.respond_to?(:draw_to)
             object.draw_to graphics

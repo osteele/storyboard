@@ -1,6 +1,0 @@
-require 'storyboard/avars.rb'
-require 'storyboard/dsl.rb'
-require 'storyboard/file_watcher.rb'
-require 'storyboard/model.rb'
-require 'storyboard/player.rb'
-require 'storyboard/processing.rb'

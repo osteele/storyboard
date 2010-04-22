@@ -28,7 +28,7 @@ into creating this movie should also be useful in creating cartoons,
 interactive applications, or illustrations for a web page or academic
 paper.
 
-Specificially, the author has had several such ideas for visual
+Specifically, the author has had several such ideas for visual
 explanations, and found himself unable to communicate these because of
 the difficulty of finding an existing animation system that was
 targeted towards this specific domain.  The first use of Storyboard
@@ -164,7 +164,7 @@ can use the +size+, +background+, +frame_rate+, +author+, +title+,
 +date+ keywords, and can make other
 {Processing}[http://processing.org/] calls (such as +color_mode+).
 
-A display object is an instance of any Ruby classe that implements a
+A display object is an instance of any Ruby class that implements a
 +draw+ method.  +draw+ uses the functions of the
 {Processing}[http://processing.org/] library.
 
@@ -189,4 +189,4 @@ aren't enough examples, and it isn't yet baked.
 
 Storyboard metadata is not implemented.  Movie creation is not
 integrated into the framework.  See the TODO file for a longer list of
-known ommissions.
+known omissions.

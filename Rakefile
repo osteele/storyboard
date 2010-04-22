@@ -1,34 +1,52 @@
-FRAME_DIR = '/tmp/storyboard/frames'
+require 'rake'
+require 'rake/testtask'
+require 'rake/rdoctask'
 
-desc "Create a H.264 movie"
-task :h264 do
-  # -metadata title="Visualizing the Fourier Transform"
-  # -metadata author="Oliver Steele"
-  # -s 1920x1080
-  cd File.join(File.dirname(__FILE__), "build")
-  sh "ffmpeg -y -i #{FRAME_DIR}/frame-%04d.png -an -pass 1 -vcodec libx264 -vpre fastfirstpass -threads 0 -sameq -b 7000k -minrate 7000k -maxrate 7000k dft.mp4"
+begin
+  require 'rcov/rcovtask'
+  Rcov::RcovTask.new do |t|
+    t.libs << 'test'
+    t.test_files = FileList['test/**/*_test.rb']
+    t.rcov_opts = ["-T -x '/Library/Ruby/*'"]
+    t.verbose = true
+  end
+rescue LoadError
+  $stderr.puts "Rcov not available. Install it for rcov-related tasks with:"
+  $stderr.puts "  sudo gem install rcov"
 end
 
-desc "Create a VGA-size movie"
-task :vga do
-  cd File.join(File.dirname(__FILE__), "build")
-  sh "ffmpeg -y -i #{FRAME_DIR}/frame-%04d.png -an -pass 1 -vcodec libx264 -vpre fastfirstpass -threads 0 -sameq -b 7000k -minrate 7000k -maxrate 7000k -s vga dft-vga.mp4"
+begin
+  require 'jeweler'
+  Jeweler::Tasks.new do |s|
+    s.name = 'storyboard'
+    s.summary = "A DSL for writing  explanatorymathematical narratives."
+    s.description = "Storyboard is an animation language, currently built on top of Ruby-Processing, for creating explanatory mathematical narratives."
+    s.email = "steele@osteele.com"
+    s.homepage = "http://github.com/osteele/storyboard"
+    s.authors = ["Oliver Steele"]
+    s.has_rdoc = true
+    s.extra_rdoc_files = %w[README.rdoc LICENSE.txt TODO.txt]
+    s.files = FileList["[A-Z]*", "{bin,lib,test}/**/*"]
+    s.add_dependency 'ruby-processing'
+  end
+
+rescue LoadError
+  $stderr.puts "Jeweler not available. Install it for jeweler-related tasks with:"
+  $stderr.puts "  sudo gem install jeweler"
 end
 
-desc "Create an XGA-size movie"
-task :xga do
-  cd File.join(File.dirname(__FILE__), "build")
-  sh "ffmpeg -y -i #{FRAME_DIR}/frame-%04d.png -an -pass 1 -vcodec libx264 -vpre fastfirstpass -threads 0 -sameq -b 7000k -minrate 7000k -maxrate 7000k -s xga dft-xga.mp4"
+Rake::TestTask.new do |t|
+  t.libs << 'lib'
+  t.pattern = 'test/**/*_test.rb'
+  t.verbose = false
 end
 
-desc "Create a movie using the MPEG4 encoder"
-task :mp4 do
-  cd File.join(File.dirname(__FILE__), "build")
-  sh "ffmpeg -y -i #{FRAME_DIR}/frame-%04d.png -vcodec mpeg4 -sameq dft.mp4"
+Rake::RDocTask.new do |rdoc|
+  rdoc.rdoc_dir = 'rdoc'
+  rdoc.title    = 'test'
+  rdoc.options << '--line-numbers' << '--inline-source'
+  rdoc.rdoc_files.include('README*')
+  rdoc.rdoc_files.include('lib/**/*.rb')
 end
 
-desc "Create an movie for the iPod"
-task :ipod do
-  cd File.join(File.dirname(__FILE__), "build")
-  sh "ffmpeg -y -i #{FRAME_DIR}/frame-%04d.png -f mov -b 1800 -maxrate 2500 -vcodec libxvid -sameq -s 320x240 -aspect 4:3 -acodec aac -ab 128 dft.mov"
-end
+task :default => :test

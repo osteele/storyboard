@@ -2,6 +2,7 @@
 
 require 'rubygems'
 require 'ruby-processing'
+require 'storyboard'
 
 module Processing
   class StoryboardRunner < Runner
@@ -14,7 +15,7 @@ module Processing
     private
 
     def spin_up(starter_script, sketch, args)
-      loader = File.join(File.dirname(__FILE__), '../processing_loader.rb')
+      loader = $:.grep(/storyboard/).map { |dir| Dir[File.join(dir, 'processing_loader.rb')] }.flatten.first
       super(starter_script, loader, [@options.path] + args)
     end
   end
